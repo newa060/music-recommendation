@@ -23,7 +23,7 @@ const Signup = () => {
    // Function to call your backend API
   const handleSignup = async (values) => {
     try {
-      const response = await fetch("http://192.168.18.240:3000/signup", {
+      const response = await fetch("http://192.168.1.106:3000/signup", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(values),

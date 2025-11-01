@@ -86,7 +86,7 @@ React.useEffect(() => {
       return;
     }
     try {
-      const response = await fetch(`http://192.168.18.240:3000/update/${userId}`, {
+      const response = await fetch(`http://192.168.1.106:3000/update/${userId}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name, bio }),

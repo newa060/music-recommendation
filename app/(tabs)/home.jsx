@@ -17,12 +17,6 @@ const Home = ({ navigation }) => {
    router.push("/FaceDetection");
   };
 
-  const playlists = [
-    { id: 1, name: "Chill Vibes", image: "https://i.imgur.com/2nCt3Sbl.jpg" },
-    { id: 2, name: "Top Hits", image: "https://i.imgur.com/l49aYS3l.jpg" },
-    { id: 3, name: "Workout Mix", image: "https://i.imgur.com/0y8Ftya.jpg" },
-    { id: 4, name: "Focus Beats", image: "https://i.imgur.com/rVCg3hS.jpg" },
-  ];
 
   return (
     <ScrollView style={styles.container}>
@@ -47,20 +41,8 @@ const Home = ({ navigation }) => {
         </TouchableOpacity>
       </View>
 
-      {/* Recommended Playlists */}
-      <Text style={styles.sectionTitle}>Recommended for You</Text>
-      <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-        {playlists.map((item) => (
-          <View key={item.id} style={styles.card}>
-            <Image source={{ uri: item.image }} style={styles.cardImage} />
-            <Text style={styles.cardText}>{item.name}</Text>
-          </View>
-        ))}
+   
       </ScrollView>
-
-      
-     
-    </ScrollView>
   );
 };
 
