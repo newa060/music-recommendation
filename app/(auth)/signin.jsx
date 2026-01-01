@@ -1,23 +1,34 @@
 import { Ionicons, MaterialIcons } from "@expo/vector-icons";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useRouter } from "expo-router";
 import { Formik } from 'formik';
 import { useEffect, useState } from 'react';
-import { Image, ScrollView, StatusBar, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Image, ScrollView, StatusBar, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from "react-native-safe-area-context";
 import logo from "../../assets/images/aatmabeat.png";
-import { useMusic } from '../../context/MusicContext'; // make sure path is correct
+import { useMusic } from '../../context/MusicContext';
+import { useSession } from '../../context/SessionContext';
 import validationSchema from '../../utils/authSchema';
 
 const Signup = () => {
     const router = useRouter();
-    const { stopMusic } = useMusic(); // get stopMusic from context
+    const { stopMusic } = useMusic();
+    const { signIn, isLoading: sessionLoading } = useSession();
     const [isLoading, setIsLoading] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
     
-     useEffect(() => {
-        stopMusic(); // stop any playing music when this screen opens
+    useEffect(() => {
+        stopMusic();
     }, []);
+
+    // Show loading screen while session is being checked
+    if (sessionLoading) {
+        return (
+            <SafeAreaView style={{ flex: 1, backgroundColor: "#0A0A0A", justifyContent: 'center', alignItems: 'center' }}>
+                <ActivityIndicator size="large" color="#6C63FF" />
+                <Text style={{ color: '#fff', marginTop: 10 }}>Loading...</Text>
+            </SafeAreaView>
+        );
+    }
 
     const handleSignin = async (values) => {
         setIsLoading(true);
@@ -36,9 +47,8 @@ const Signup = () => {
             const data = await response.json();
 
             if (response.ok) {
-                await AsyncStorage.setItem("user", JSON.stringify(data.user));
+                await signIn(data.user);
                 alert("Login successful!");
-                router.push("/home");
             } else {
                 alert(data.message || "Invalid email or password");
             }
@@ -68,7 +78,6 @@ const Signup = () => {
                             />
                         </View>
                         <Text style={styles.title}>Welcome Back</Text>
-                        
                     </View>
 
                     {/* Form Section */}
@@ -195,7 +204,6 @@ const Signup = () => {
                             </View>
                         </View>
                     </View>
-
                 </View>
             </ScrollView>
         </SafeAreaView>
@@ -218,8 +226,8 @@ const styles = {
         marginBottom: 20,
     },
     logo: {
-        width: 350,  // Increased from 280
-        height: 120, // Increased from 80
+        width: 350,
+        height: 120,
     },
     title: {
         fontSize: 32,
@@ -228,12 +236,6 @@ const styles = {
         textAlign: 'center',
         marginBottom: 8,
         letterSpacing: 0.5,
-    },
-    subtitle: {
-        fontSize: 16,
-        color: '#888',
-        textAlign: 'center',
-        lineHeight: 22,
     },
     formContainer: {
         flex: 1,
@@ -373,16 +375,6 @@ const styles = {
         color: '#6C63FF',
         fontSize: 14,
         fontWeight: '600',
-    },
-    footer: {
-        alignItems: 'center',
-        marginTop: 40,
-    },
-    footerText: {
-        color: '#666',
-        fontSize: 12,
-        fontStyle: 'italic',
-        letterSpacing: 0.5,
     },
 };
 

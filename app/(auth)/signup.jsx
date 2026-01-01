@@ -3,6 +3,7 @@ import { useRouter } from "expo-router";
 import { Formik } from "formik";
 import { useEffect, useState } from 'react';
 import {
+  ActivityIndicator,
   Alert,
   Image,
   ScrollView,
@@ -15,8 +16,8 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import * as Yup from "yup";
 import logo from "../../assets/images/aatmabeat.png";
-import { useMusic } from "../../context/MusicContext"; // <--- import MusicContext
-
+import { useMusic } from "../../context/MusicContext";
+import { useSession } from "../../context/SessionContext";
 
 // ✅ Enhanced validation schema with better email validation
 const validationSchema = Yup.object().shape({
@@ -35,17 +36,29 @@ const validationSchema = Yup.object().shape({
 const Signup = () => {
   const router = useRouter();
   const { stopMusic } = useMusic();
+  const { isLoading: sessionLoading } = useSession();
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
-    useEffect(() => {
+  useEffect(() => {
     stopMusic(); // stops music whenever this screen mounts
   }, []);
+
   // ✅ Additional email validation function
   const isValidEmail = (email) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
     return emailRegex.test(email);
   };
+
+  // Show loading screen while session is being checked
+  if (sessionLoading) {
+    return (
+      <SafeAreaView style={{ flex: 1, backgroundColor: "#0A0A0A", justifyContent: 'center', alignItems: 'center' }}>
+        <ActivityIndicator size="large" color="#6C63FF" />
+        <Text style={{ color: '#fff', marginTop: 10 }}>Loading...</Text>
+      </SafeAreaView>
+    );
+  }
 
   const handleSignup = async (values) => {
     // ✅ Double-check email validation before API call
@@ -56,7 +69,7 @@ const Signup = () => {
 
     setIsLoading(true);
     try {
-      const respose =await fetch("http://192.168.18.240/signup", {
+      const response = await fetch("http://192.168.18.240:3000/signup", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(values),
@@ -96,7 +109,6 @@ const Signup = () => {
               />
             </View>
             <Text style={styles.title}>Create Account</Text>
-            
           </View>
 
           {/* Form Section */}
@@ -151,9 +163,6 @@ const Signup = () => {
                         <Text style={styles.successText}>Valid email format</Text>
                       </View>
                     ) : null}
-                    
-                    
-            
                   </View>
 
                   {/* Password Input */}

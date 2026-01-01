@@ -43,30 +43,32 @@ const Signup = () => {
     ]).start();
   }, []);
 
-  const handleSignup = async (values) => {
-    setIsLoading(true);
-    try {
-      const response = await fetch("http://192.168.18.240:3000/signup", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(values),
-      });
+  // Replace the handleSignup function in app/index.jsx with this:
 
-      const data = await response.json();
+const handleSignup = async (values) => {
+  setIsLoading(true);
+  try {
+    const response = await fetch("http://192.168.18.240:3000/signup", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(values),
+    });
 
-      if (response.status === 201) {
-        Alert.alert("Welcome to Aatmabeat!", "Your account has been created successfully!");
-        router.push("/signin");
-      } else {
-        Alert.alert("Signup Failed", data.message || "Please try again with different credentials");
-      }
-    } catch (error) {
-      console.error(error);
-      Alert.alert("Connection Error", "Unable to connect to server. Please check your internet connection.");
-    } finally {
-      setIsLoading(false);
+    const data = await response.json();
+
+    if (response.status === 201) {
+      Alert.alert("Welcome to Aatmabeat!", "Your account has been created successfully!");
+      router.push("/signin");
+    } else {
+      Alert.alert("Signup Failed", data.message || "Please try again with different credentials");
     }
-  };
+  } catch (error) {
+    console.error(error);
+    Alert.alert("Connection Error", "Unable to connect to server. Please check your internet connection.");
+  } finally {
+    setIsLoading(false);
+  }
+};
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: "#0A0A0A" }}>

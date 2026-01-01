@@ -1,9 +1,11 @@
 import { Feather, FontAwesome5, Ionicons, MaterialIcons } from "@expo/vector-icons";
+import { useFocusEffect } from '@react-navigation/native';
 import { useRouter } from "expo-router";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Animated,
+  BackHandler,
   Dimensions,
   Easing,
   FlatList,
@@ -17,6 +19,7 @@ import {
   View
 } from "react-native";
 import { useMusic } from "../../context/MusicContext";
+import { useSession } from "../../context/SessionContext";
 
 const { width, height } = Dimensions.get("window");
 
@@ -661,6 +664,44 @@ const Home = () => {
   const [showExitModal, setShowExitModal] = useState(false);
   const router = useRouter();
 
+  // Session management
+  const { isAuthenticated, user, isLoading: sessionLoading } = useSession();
+
+  // Show loading while session is being checked
+  if (sessionLoading) {
+    return (
+      <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
+        <ActivityIndicator size="large" color="#6C63FF" />
+        <Text style={{ color: '#fff', marginTop: 10 }}>Loading...</Text>
+      </View>
+    );
+  }
+
+  // Handle hardware back button - prevent going back to auth screens
+  useFocusEffect(
+    useCallback(() => {
+      const onBackPress = () => {
+        if (isAuthenticated) {
+          // User is logged in - prevent going back to auth screens
+          if (result) {
+            // If showing search results, go back to home screen
+            handleBackToHome();
+          } else {
+            // If on home screen, show exit confirmation
+            setShowExitModal(true);
+          }
+          return true; // Prevent default back action
+        }
+        // Guest mode - allow normal back navigation
+        return false;
+      };
+
+      const backHandler = BackHandler.addEventListener('hardwareBackPress', onBackPress);
+
+      return () => backHandler.remove();
+    }, [isAuthenticated, result])
+  );
+
   // Use MusicContext for all audio operations
   const { 
     playSound, 
@@ -909,12 +950,17 @@ const Home = () => {
 
   // Simple back button handler - shows exit confirmation
   const handleBackPress = () => {
-    if (result) {
-      handleBackToHome();
-    } else {
-      setShowExitModal(true);
-    }
-  };
+  if (result) {
+    // If showing results, go back to home/search
+    handleBackToHome();
+  } else if (isAuthenticated) {
+    // If authenticated and on main screen, show exit confirmation
+    setShowExitModal(true);
+  } else {
+    // Guest mode - allow normal back
+    router.back();
+  }
+};
 
   const isSongPlaying = (song) => {
     if (!song || !song.filename) return false;

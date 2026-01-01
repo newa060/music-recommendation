@@ -4,6 +4,7 @@ import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import { Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { useMusic } from "../../context/MusicContext";
+import { useSession } from "../../context/SessionContext";
 
 const Profile = () => {
   const [name, setName] = useState("");
@@ -11,54 +12,56 @@ const Profile = () => {
   const [userId, setUserId] = useState(null);
   const router = useRouter();
   const { stopMusic } = useMusic();
+  const { signOut, user: sessionUser } = useSession();
 
 
   // Load user info from AsyncStorage
   useEffect(() => {
-    const loadUserData = async () => {
-      try {
-        const storedUserId = await AsyncStorage.getItem('userId') || 
-                            await AsyncStorage.getItem('userID') || 
-                            await AsyncStorage.getItem('id') ||
-                            await AsyncStorage.getItem('user_id');
-        
-        if (storedUserId) {
-          setUserId(storedUserId);
-        } else {
-          const storedUser = await AsyncStorage.getItem("user");
-          if (storedUser) {
-            const userData = JSON.parse(storedUser);
-            if (userData.id) {
-              setUserId(userData.id);
-              await AsyncStorage.setItem('userId', userData.id.toString());
-            }
-          }
+  const loadUserData = async () => {
+    try {
+      // First try to get from session context
+      if (sessionUser) {
+        setName(sessionUser.name || "User");
+        setEmail(sessionUser.email || "");
+        if (sessionUser.id) {
+          setUserId(sessionUser.id);
         }
-
-        const storedUser = await AsyncStorage.getItem("user");
-        
-        if (storedUser) {
-          const userData = JSON.parse(storedUser);
-          setName(userData.name || "User");
-          setEmail(userData.email || "");
-        }
-      } catch (error) {
-        console.error("Error loading user data:", error);
+        return;
       }
-    };
-    
-    loadUserData();
-  }, []);
+
+      // Fallback to AsyncStorage
+      const storedUserId = await AsyncStorage.getItem('userId') || 
+                          await AsyncStorage.getItem('userID') || 
+                          await AsyncStorage.getItem('id') ||
+                          await AsyncStorage.getItem('user_id');
+      
+      if (storedUserId) {
+        setUserId(storedUserId);
+      }
+
+      const storedUser = await AsyncStorage.getItem("user");
+      
+      if (storedUser) {
+        const userData = JSON.parse(storedUser);
+        setName(userData.name || "User");
+        setEmail(userData.email || "");
+        if (userData.id) {
+          setUserId(userData.id);
+        }
+      }
+    } catch (error) {
+      console.error("Error loading user data:", error);
+    }
+  };
+  
+  loadUserData();
+}, [sessionUser]);
 
   // Logout function
 const handleLogout = async () => {
-  await stopMusic();  // 🔥 stop the currently playing music
-
-  await AsyncStorage.removeItem("user");
-  await AsyncStorage.removeItem("userId");
-
+  await stopMusic();  // Stop the currently playing music
+  await signOut();    // Use session context signOut
   alert("Logged out successfully!");
-  router.push("/signin");
 };
 
 
