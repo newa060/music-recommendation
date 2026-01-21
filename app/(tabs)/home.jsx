@@ -23,7 +23,7 @@ import { useSession } from "../../context/SessionContext";
 
 const { width, height } = Dimensions.get("window");
 
-// Custom Slider Component (unchanged)
+// Custom Slider Component
 const CustomSlider = ({ value, minimumValue, maximumValue, onValueChange, minimumTrackTintColor, maximumTrackTintColor, thumbTintColor, style }) => {
   const [sliderWidth, setSliderWidth] = useState(width - 120);
   const [isSeeking, setIsSeeking] = useState(false);
@@ -51,6 +51,7 @@ const CustomSlider = ({ value, minimumValue, maximumValue, onValueChange, minimu
           { backgroundColor: maximumTrackTintColor }
         ]}
       />
+      
       <View 
         style={[
           styles.progress,
@@ -80,9 +81,10 @@ const CustomSlider = ({ value, minimumValue, maximumValue, onValueChange, minimu
 };
 
 // Compact Recently Played Item Component
-const RecentlyPlayedItem = ({ item, index, onPress, onPlay, isCurrentlyPlaying }) => {
+const RecentlyPlayedItem = ({ item, index, onPress, onPlay, isCurrentlyPlaying, onDelete }) => {
   const slideAnim = useRef(new Animated.Value(50)).current;
   const fadeAnim = useRef(new Animated.Value(0)).current;
+  const [showDeleteOption, setShowDeleteOption] = useState(false);
 
   useEffect(() => {
     Animated.sequence([
@@ -112,20 +114,37 @@ const RecentlyPlayedItem = ({ item, index, onPress, onPlay, isCurrentlyPlaying }
     onPlay(item);
   };
 
-  const formatTimeAgo = (dateString) => {
-    const playedAt = new Date(dateString);
-    const now = new Date();
-    const diffMs = now - playedAt;
-    const diffMins = Math.floor(diffMs / 60000);
-    const diffHours = Math.floor(diffMs / 3600000);
-    const diffDays = Math.floor(diffMs / 86400000);
+  const handleMorePress = (e) => {
+    e.stopPropagation();
+    setShowDeleteOption(!showDeleteOption);
+  };
 
-    if (diffMins < 60) {
-      return `${diffMins} min ago`;
-    } else if (diffHours < 24) {
-      return `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`;
-    } else {
-      return `${diffDays} day${diffDays > 1 ? 's' : ''} ago`;
+  const handleDelete = (e) => {
+    e.stopPropagation();
+    onDelete(item);
+    setShowDeleteOption(false);
+  };
+
+  const formatTimeAgo = (dateString) => {
+    if (!dateString) return "Recently";
+    
+    try {
+      const playedAt = new Date(dateString);
+      const now = new Date();
+      const diffMs = now - playedAt;
+      const diffMins = Math.floor(diffMs / 60000);
+      const diffHours = Math.floor(diffMs / 3600000);
+      const diffDays = Math.floor(diffMs / 86400000);
+
+      if (diffMins < 60) {
+        return `${diffMins} min ago`;
+      } else if (diffHours < 24) {
+        return `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`;
+      } else {
+        return `${diffDays} day${diffDays > 1 ? 's' : ''} ago`;
+      }
+    } catch (error) {
+      return "Recently";
     }
   };
 
@@ -162,7 +181,7 @@ const RecentlyPlayedItem = ({ item, index, onPress, onPlay, isCurrentlyPlaying }
               styles.recentItemTitle,
               isCurrentlyPlaying && styles.nowPlayingTitle
             ]} numberOfLines={1}>
-              {item.title}
+              {item.title || "Unknown Song"}
             </Text>
             {isCurrentlyPlaying && (
               <View style={styles.liveIndicator}>
@@ -175,7 +194,7 @@ const RecentlyPlayedItem = ({ item, index, onPress, onPlay, isCurrentlyPlaying }
             {item.artist || "Unknown Artist"}
           </Text>
           <Text style={styles.recentItemTime}>
-            {item.playedAt ? formatTimeAgo(item.playedAt) : "Recently"}
+            {formatTimeAgo(item.playedAt)}
           </Text>
         </View>
 
@@ -194,22 +213,33 @@ const RecentlyPlayedItem = ({ item, index, onPress, onPlay, isCurrentlyPlaying }
           />
         </TouchableOpacity>
 
-        {/* More Options */}
-        <TouchableOpacity style={styles.recentMoreButton}>
-          <Ionicons name="ellipsis-vertical" size={16} color="#888" />
-        </TouchableOpacity>
+        {/* More Options with Delete */}
+        <View style={styles.moreOptionsContainer}>
+          <TouchableOpacity style={styles.recentMoreButton} onPress={handleMorePress}>
+            <Ionicons name="ellipsis-vertical" size={16} color="#888" />
+          </TouchableOpacity>
+          
+          {showDeleteOption && (
+            <TouchableOpacity 
+              style={styles.deleteOptionButton}
+              onPress={handleDelete}
+            >
+              <Ionicons name="trash-outline" size={16} color="#FF6B6B" />
+              <Text style={styles.deleteOptionText}>Remove</Text>
+            </TouchableOpacity>
+          )}
+        </View>
       </Animated.View>
     </TouchableOpacity>
   );
 };
 
-// Animated Song Card Component (unchanged)
+// Animated Song Card Component
 const AnimatedSongCard = ({ 
   item, 
   index, 
   musicWaveAnim, 
   isCurrentlyPlaying, 
-  playSound, 
   isFeatured = false, 
   onPlay,
   onCardPress
@@ -380,7 +410,7 @@ const AnimatedSongCard = ({
   );
 };
 
-// Full Screen Music Player Component (unchanged)
+// Full Screen Music Player Component
 const FullScreenPlayer = ({ 
   visible, 
   song, 
@@ -573,7 +603,7 @@ const AnimatedSectionHeader = ({ title, icon, delay = 0, showSeeAll = false, onS
   );
 };
 
-// Exit Confirmation Modal (unchanged)
+// Exit Confirmation Modal
 const ExitConfirmationModal = ({ visible, onConfirm, onCancel }) => {
   const slideAnim = useRef(new Animated.Value(300)).current;
   const fadeAnim = useRef(new Animated.Value(0)).current;
@@ -654,63 +684,223 @@ const ExitConfirmationModal = ({ visible, onConfirm, onCancel }) => {
   );
 };
 
+// Recently Played Modal
+const RecentlyPlayedModal = ({ visible, onClose, recentlyPlayedList, onPlay, onDelete, currentlyPlayingId }) => {
+  const slideAnim = useRef(new Animated.Value(height)).current;
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    if (visible) {
+      Animated.parallel([
+        Animated.timing(slideAnim, {
+          toValue: 0,
+          duration: 400,
+          easing: Easing.out(Easing.cubic),
+          useNativeDriver: true,
+        }),
+        Animated.timing(fadeAnim, {
+          toValue: 1,
+          duration: 400,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    } else {
+      Animated.parallel([
+        Animated.timing(slideAnim, {
+          toValue: height,
+          duration: 300,
+          easing: Easing.in(Easing.cubic),
+          useNativeDriver: true,
+        }),
+        Animated.timing(fadeAnim, {
+          toValue: 0,
+          duration: 300,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    }
+  }, [visible]);
+
+  const isSongPlaying = (song) => {
+    if (!song || !song.filename) return false;
+    return currentlyPlayingId === song.filename;
+  };
+
+  const renderRecentlyPlayedItem = ({ item, index }) => (
+    item ? (
+      <Animated.View style={[
+        styles.recentlyPlayedItem,
+        {
+          opacity: fadeAnim,
+        }
+      ]}>
+        {/* Album Art */}
+        <View style={styles.recentAlbumArt}>
+          <View style={[
+            styles.albumArtCircle,
+            isSongPlaying(item) && styles.playingAlbumArt
+          ]}>
+            <Ionicons 
+              name={isSongPlaying(item) ? "musical-notes" : "musical-note"} 
+              size={20} 
+              color={isSongPlaying(item) ? "#6C63FF" : "#888"} 
+            />
+          </View>
+          {isSongPlaying(item) && (
+            <View style={styles.nowPlayingPulse} />
+          )}
+        </View>
+
+        {/* Song Info */}
+        <View style={styles.recentItemInfo}>
+          <View style={styles.recentTitleRow}>
+            <Text style={[
+              styles.recentItemTitle,
+              isSongPlaying(item) && styles.nowPlayingTitle
+            ]} numberOfLines={1}>
+              {item.title || "Unknown Song"}
+            </Text>
+            {isSongPlaying(item) && (
+              <View style={styles.liveIndicator}>
+                <View style={styles.liveDot} />
+                <Text style={styles.liveText}>LIVE</Text>
+              </View>
+            )}
+          </View>
+          <Text style={styles.recentItemArtist} numberOfLines={1}>
+            {item.artist || "Unknown Artist"}
+          </Text>
+        </View>
+
+        {/* Action Buttons Container */}
+        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+          <TouchableOpacity 
+            style={styles.playButton}
+            onPress={() => onPlay(item)}
+            activeOpacity={0.7}
+          >
+            <Ionicons 
+              name={isSongPlaying(item) ? "pause-circle" : "play-circle"} 
+              size={24} 
+              color="#6C63FF" 
+            />
+          </TouchableOpacity>
+
+          <TouchableOpacity 
+            style={styles.deleteButton}
+            onPress={() => onDelete(item)}
+            activeOpacity={0.7}
+          >
+            <Ionicons name="trash-outline" size={20} color="#FF6B6B" />
+          </TouchableOpacity>
+        </View>
+      </Animated.View>
+    ) : null
+  );
+
+  return (
+    <Modal
+      visible={visible}
+      transparent={true}
+      animationType="none"
+      onRequestClose={onClose}
+    >
+      <Animated.View style={[styles.modalOverlay, { opacity: fadeAnim }]}>
+        <Animated.View 
+          style={[
+            styles.fullScreenModalContent,
+            { transform: [{ translateY: slideAnim }] }
+          ]}
+        >
+          {/* Modal Header */}
+          <View style={styles.modalHeaderTop}>
+            <Text style={styles.modalHeaderTitle}>Recently Played ({recentlyPlayedList.length})</Text>
+            <TouchableOpacity onPress={onClose} style={styles.closeButton}>
+              <Ionicons name="close" size={28} color="#fff" />
+            </TouchableOpacity>
+          </View>
+
+          {/* Recently Played List */}
+          {recentlyPlayedList.length > 0 ? (
+            <FlatList
+              data={recentlyPlayedList}
+              keyExtractor={(item, index) => `modal-recent-${item.id || item.filename || index}-${index}`}
+              renderItem={renderRecentlyPlayedItem}
+              scrollEnabled={true}
+              showsVerticalScrollIndicator={true}
+              contentContainerStyle={styles.modalListContent}
+            />
+          ) : (
+            <View style={styles.emptyContainer}>
+              <Ionicons name="musical-notes" size={64} color="#666" />
+              <Text style={styles.emptyText}>No recently played songs</Text>
+            </View>
+          )}
+        </Animated.View>
+      </Animated.View>
+    </Modal>
+  );
+};
+
 const Home = () => {
   const [searchText, setSearchText] = useState("");
   const [result, setResult] = useState(null);
   const [loading, setLoading] = useState(false);
-  const [recentlyPlayed, setRecentlyPlayed] = useState([]);
   const [fullScreenPlayerVisible, setFullScreenPlayerVisible] = useState(false);
   const [currentSong, setCurrentSong] = useState(null);
   const [showExitModal, setShowExitModal] = useState(false);
+  const [forceRefresh, setForceRefresh] = useState(0);
+  const [showRecentlyPlayedModal, setShowRecentlyPlayedModal] = useState(false);
   const router = useRouter();
 
-  // Session management
+  // Session management - MOVE ALL HOOKS TO THE TOP
   const { isAuthenticated, user, isLoading: sessionLoading } = useSession();
 
-  // Show loading while session is being checked
-  if (sessionLoading) {
-    return (
-      <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
-        <ActivityIndicator size="large" color="#6C63FF" />
-        <Text style={{ color: '#fff', marginTop: 10 }}>Loading...</Text>
-      </View>
-    );
-  }
-
-  // Handle hardware back button - prevent going back to auth screens
-  useFocusEffect(
-    useCallback(() => {
-      const onBackPress = () => {
-        if (isAuthenticated) {
-          // User is logged in - prevent going back to auth screens
-          if (result) {
-            // If showing search results, go back to home screen
-            handleBackToHome();
-          } else {
-            // If on home screen, show exit confirmation
-            setShowExitModal(true);
-          }
-          return true; // Prevent default back action
-        }
-        // Guest mode - allow normal back navigation
-        return false;
-      };
-
-      const backHandler = BackHandler.addEventListener('hardwareBackPress', onBackPress);
-
-      return () => backHandler.remove();
-    }, [isAuthenticated, result])
-  );
-
-  // Use MusicContext for all audio operations
+  // Music context with recently played functionality
   const { 
     playSound, 
     stopMusic, 
     currentlyPlayingId, 
-    playbackStatus 
+    playbackStatus,
+    recentlyPlayed: contextRecentlyPlayed,
+    removeFromRecentlyPlayed,
+    loadRecentlyPlayed
   } = useMusic();
 
-  // Animation values
+  // Use recently played from context with local state
+  const [recentlyPlayed, setRecentlyPlayed] = useState([]);
+
+  // Load recently played when user changes or component mounts
+  useEffect(() => {
+    const loadRecent = async () => {
+      const userId = user?.id || 'guest';
+      console.log('👤 Loading recently played for user:', userId);
+      await loadRecentlyPlayed(userId);
+    };
+    
+    loadRecent();
+  }, [user?.id, forceRefresh]);
+
+  // Update local state when context changes
+  useEffect(() => {
+    if (contextRecentlyPlayed && Array.isArray(contextRecentlyPlayed)) {
+      console.log('🔄 Updating recently played list:', contextRecentlyPlayed.length, 'items');
+      setRecentlyPlayed(contextRecentlyPlayed);
+    } else {
+      console.log('🔄 Setting empty recently played list');
+      setRecentlyPlayed([]);
+    }
+  }, [contextRecentlyPlayed]);
+
+  // Handle delete from recently played
+  const handleDeleteFromRecentlyPlayed = async (songToDelete) => {
+    console.log('🗑️ Deleting song:', songToDelete.title);
+    const userId = user?.id || 'guest';
+    await removeFromRecentlyPlayed(songToDelete.filename, userId);
+    setForceRefresh(prev => prev + 1); // Trigger refresh
+  };
+
+  // Animation values - MUST BE DECLARED BEFORE ANY CONDITIONAL RETURNS
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(50)).current;
   const scaleAnim = useRef(new Animated.Value(0.9)).current;
@@ -718,33 +908,6 @@ const Home = () => {
   const musicWaveAnim = useRef(new Animated.Value(0)).current;
   const headerSlideAnim = useRef(new Animated.Value(-100)).current;
   const resultsScaleAnim = useRef(new Animated.Value(0)).current;
-
-  useEffect(() => {
-    // Load recently played from storage (if needed)
-    // For now, initialize empty
-    setRecentlyPlayed([]);
-  }, []);
-
-  // Clean up when component unmounts
-  useEffect(() => {
-    return () => {
-      // Cleanup is handled by MusicContext
-    };
-  }, []);
-
-  const saveToRecentlyPlayed = (song) => {
-    const songWithMetadata = {
-      ...song,
-      artist: song.artist || "Unknown Artist",
-      playedAt: new Date().toISOString(),
-    };
-    
-    const newRecentlyPlayed = [
-      songWithMetadata,
-      ...recentlyPlayed.filter(item => item.filename !== song.filename)
-    ].slice(0, 8); // Keep last 8 songs (compact version)
-    setRecentlyPlayed(newRecentlyPlayed);
-  };
 
   // Header animation sequence
   useEffect(() => {
@@ -809,9 +972,47 @@ const Home = () => {
     }
   }, [loading]);
 
-  const handlePlayWithHistory = (song) => {
-    playSound(song);
-    saveToRecentlyPlayed(song);
+  // Handle hardware back button
+  useFocusEffect(
+    useCallback(() => {
+      const onBackPress = () => {
+        if (isAuthenticated) {
+          if (result) {
+            handleBackToHome();
+          } else {
+            setShowExitModal(true);
+          }
+          return true;
+        }
+        return false;
+      };
+
+      const backHandler = BackHandler.addEventListener('hardwareBackPress', onBackPress);
+
+      return () => backHandler.remove();
+    }, [isAuthenticated, result])
+  );
+
+  // Clean up when component unmounts
+  useEffect(() => {
+    return () => {
+      // Cleanup is handled by MusicContext
+    };
+  }, []);
+
+  // Show loading while session is being checked - MUST BE AFTER ALL HOOKS
+  if (sessionLoading) {
+    return (
+      <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
+        <ActivityIndicator size="large" color="#6C63FF" />
+        <Text style={{ color: '#fff', marginTop: 10 }}>Loading...</Text>
+      </View>
+    );
+  }
+
+  const handlePlayWithHistory = async (song) => {
+    console.log('▶️ Playing song with history:', song.title);
+    await playSound(song);
   };
 
   const handleCardPress = (song) => {
@@ -820,7 +1021,6 @@ const Home = () => {
     // Auto-play when opening full screen
     if (currentlyPlayingId !== song.filename) {
       playSound(song);
-      saveToRecentlyPlayed(song);
     }
   };
 
@@ -830,24 +1030,20 @@ const Home = () => {
   };
 
   const handleFullScreenPlayPause = async () => {
-    // This will be handled by the MusicContext playSound function
     if (currentSong) {
       playSound(currentSong);
     }
   };
 
   const handleSeek = async (value) => {
-    // Seek functionality should be implemented in MusicContext
     console.log("Seek to:", value);
   };
 
   const handleSkipForward = async () => {
-    // Skip forward functionality should be implemented in MusicContext
     console.log("Skip forward");
   };
 
   const handleSkipBackward = async () => {
-    // Skip backward functionality should be implemented in MusicContext
     console.log("Skip backward");
   };
 
@@ -874,8 +1070,9 @@ const Home = () => {
     setResult(null);
 
     try {
+      const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL || "http://192.168.18.240:3000";
       const res = await fetch(
-        `http://192.168.18.240:3000/recommend?song=${encodeURIComponent(searchText)}`
+        `${API_BASE_URL}/recommend?song=${encodeURIComponent(searchText)}`
       );
 
       if (!res.ok) throw new Error(`Server error: ${res.status}`);
@@ -944,23 +1141,9 @@ const Home = () => {
   };
 
   const handleSeeAllRecentlyPlayed = () => {
-    // Optional: Navigate to full recently played screen
-    console.log("Navigate to full recently played list");
+    console.log("Opening recently played modal with", recentlyPlayed.length, "items");
+    setShowRecentlyPlayedModal(true);
   };
-
-  // Simple back button handler - shows exit confirmation
-  const handleBackPress = () => {
-  if (result) {
-    // If showing results, go back to home/search
-    handleBackToHome();
-  } else if (isAuthenticated) {
-    // If authenticated and on main screen, show exit confirmation
-    setShowExitModal(true);
-  } else {
-    // Guest mode - allow normal back
-    router.back();
-  }
-};
 
   const isSongPlaying = (song) => {
     if (!song || !song.filename) return false;
@@ -974,7 +1157,6 @@ const Home = () => {
         index={index}
         musicWaveAnim={musicWaveAnim}
         isCurrentlyPlaying={isSongPlaying(item)}
-        playSound={playSound}
         onPlay={handlePlayWithHistory}
         onCardPress={handleCardPress}
       />
@@ -987,6 +1169,7 @@ const Home = () => {
       index={index}
       onPress={handleRecentlyPlayedPress}
       onPlay={handlePlayWithHistory}
+      onDelete={handleDeleteFromRecentlyPlayed}
       isCurrentlyPlaying={isSongPlaying(item)}
     />
   );
@@ -1026,12 +1209,6 @@ const Home = () => {
             </View>
             <Text style={styles.subtitle}>Find music that matches your mood</Text>
           </View>
-          
-          {/* Back/Exit Button */}
-          <TouchableOpacity style={styles.exitButton} onPress={handleBackPress}>
-            <Ionicons name="arrow-back" size={20} color="#FF6B6B" />
-            <Text style={styles.exitButtonText}>Exit</Text>
-          </TouchableOpacity>
         </Animated.View>
 
         {/* Back to Home Button */}
@@ -1078,6 +1255,7 @@ const Home = () => {
           </Animated.View>
         </Animated.View>
 
+        
         {/* Recently Played Section - Compact Vertical List */}
         {!result && recentlyPlayed.length > 0 && (
           <View style={styles.recentlyPlayedSection}>
@@ -1089,8 +1267,8 @@ const Home = () => {
               onSeeAll={handleSeeAllRecentlyPlayed}
             />
             <FlatList
-              data={recentlyPlayed.slice(0, 4)} // Show only 4 items initially
-              keyExtractor={(item, index) => `recent-${item.filename}-${index}`}
+              data={recentlyPlayed.slice(0, 4)}
+              keyExtractor={(item, index) => `recent-${item.id || item.filename || index}-${index}`}
               renderItem={renderRecentlyPlayedItem}
               scrollEnabled={false}
               showsVerticalScrollIndicator={false}
@@ -1132,7 +1310,6 @@ const Home = () => {
                       index={0}
                       musicWaveAnim={musicWaveAnim}
                       isCurrentlyPlaying={isSongPlaying(result.searched_song)}
-                      playSound={playSound}
                       onPlay={handlePlayWithHistory}
                       onCardPress={handleCardPress}
                       isFeatured={true}
@@ -1145,7 +1322,7 @@ const Home = () => {
                     <View style={styles.recommendationsContainer}>
                       <FlatList
                         data={result.recommendations}
-                        keyExtractor={(item, index) => index.toString()}
+                        keyExtractor={(item, index) => item?.filename || index.toString()}
                         renderItem={renderSong}
                         scrollEnabled={false}
                         showsVerticalScrollIndicator={false}
@@ -1202,6 +1379,16 @@ const Home = () => {
         onConfirm={handleConfirmExit}
         onCancel={handleCancelExit}
       />
+
+      {/* Recently Played Modal */}
+      <RecentlyPlayedModal
+        visible={showRecentlyPlayedModal}
+        onClose={() => setShowRecentlyPlayedModal(false)}
+        recentlyPlayedList={recentlyPlayed}
+        onPlay={handlePlayWithHistory}
+        onDelete={handleDeleteFromRecentlyPlayed}
+        currentlyPlayingId={currentlyPlayingId}
+      />
     </View>
   );
 };
@@ -1255,23 +1442,6 @@ const styles = StyleSheet.create({
     color: "#bbb",
     letterSpacing: 0.4,
     lineHeight: 20,
-  },
-  exitButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "rgba(255, 107, 107, 0.1)",
-    borderRadius: 10,
-    paddingVertical: 6,
-    paddingHorizontal: 10,
-    borderWidth: 1,
-    borderColor: "rgba(255, 107, 107, 0.3)",
-    marginTop: 8,
-  },
-  exitButtonText: {
-    color: "#FF6B6B",
-    fontSize: 11,
-    fontWeight: "600",
-    marginLeft: 4,
   },
   backButtonContainer: {
     alignSelf: 'flex-start',
@@ -1372,7 +1542,19 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     letterSpacing: 0.4,
   },
-  // Recently Played Section Styles - Compact
+  // Debug info styles
+  debugInfo: {
+    backgroundColor: 'rgba(0,0,0,0.3)',
+    padding: 8,
+    borderRadius: 8,
+    marginBottom: 10,
+  },
+  debugText: {
+    color: '#FFD700',
+    fontSize: 10,
+    fontFamily: 'monospace',
+  },
+  // Recently Played Section Styles
   recentlyPlayedSection: {
     marginBottom: 25,
   },
@@ -1419,6 +1601,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     padding: 12,
     marginBottom: 8,
+    marginHorizontal: 5,
     borderWidth: 1,
     borderColor: '#333',
     shadowColor: '#000',
@@ -1426,6 +1609,8 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.2,
     shadowRadius: 3,
     elevation: 2,
+    position: 'relative',
+    justifyContent: 'space-between',
   },
   recentAlbumArt: {
     position: 'relative',
@@ -1522,8 +1707,36 @@ const styles = StyleSheet.create({
   recentPlayingButton: {
     backgroundColor: '#FF6B6B',
   },
+  moreOptionsContainer: {
+    position: 'relative',
+  },
   recentMoreButton: {
     padding: 6,
+  },
+  deleteOptionButton: {
+    position: 'absolute',
+    top: -40,
+    right: 0,
+    backgroundColor: 'rgba(26, 26, 26, 0.95)',
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#333',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 5,
+    zIndex: 10,
+  },
+  deleteOptionText: {
+    color: '#FF6B6B',
+    fontSize: 12,
+    fontWeight: '600',
+    marginLeft: 6,
   },
   showMoreButton: {
     flexDirection: 'row',
@@ -1760,7 +1973,7 @@ const styles = StyleSheet.create({
     textAlign: "center",
     lineHeight: 20,
   },
-  // Full Screen Player Styles (unchanged)
+  // Full Screen Player Styles
   fullScreenPlayer: {
     position: 'absolute',
     top: 0,
@@ -1978,5 +2191,62 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 16,
     fontWeight: 'bold',
+  },
+  // Recently Played Modal Styles
+  fullScreenModalContent: {
+    flex: 1,
+    backgroundColor: '#0A0A0A',
+    borderTopLeftRadius: 30,
+    borderTopRightRadius: 30,
+    marginTop: 60,
+    overflow: 'hidden',
+  },
+  modalHeaderTop: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#2A2A2A',
+  },
+  modalHeaderTitle: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    color: '#fff',
+  },
+  closeButton: {
+    padding: 8,
+  },
+  modalListContent: {
+    paddingHorizontal: 10,
+    paddingVertical: 10,
+  },
+  playButton: {
+    padding: 10,
+    marginHorizontal: 4,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderRadius: 8,
+    backgroundColor: 'rgba(108, 99, 255, 0.1)',
+  },
+  deleteButton: {
+    padding: 10,
+    marginHorizontal: 4,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderRadius: 8,
+    backgroundColor: 'rgba(255, 107, 107, 0.1)',
+  },
+  emptyContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+  },
+  emptyText: {
+    color: '#888',
+    fontSize: 16,
+    marginTop: 16,
   },
 });

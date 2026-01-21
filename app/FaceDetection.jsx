@@ -14,6 +14,7 @@ import {
   View
 } from "react-native";
 import { useMusic } from "../context/MusicContext";
+import { useSession } from "../context/SessionContext";
 
 const { width, height } = Dimensions.get("window");
 
@@ -29,14 +30,15 @@ export default function FaceDetection() {
   const [isCameraReady, setIsCameraReady] = useState(false);
   
   const { 
-    playSound, 
-    currentlyPlayingId, 
-    isPlaying,
-    stopMusic,
-    pauseMusic,
-    resumeMusic,
-    playbackStatus
-  } = useMusic();
+  playSound, 
+  currentlyPlayingId, 
+  isPlaying,
+  stopMusic,
+  pauseMusic,
+  resumeMusic,
+  playbackStatus,
+  saveToRecentlyPlayed
+} = useMusic();
 
   // Check camera permission
   useEffect(() => {
@@ -44,6 +46,8 @@ export default function FaceDetection() {
       setHasPermission(permission.granted);
     }
   }, [permission]);
+
+  const { user } = useSession();
 
   // Debug logging for audio state
   useEffect(() => {
@@ -206,6 +210,7 @@ export default function FaceDetection() {
     
     // Play the song
     await playSound(song);
+    await saveToRecentlyPlayed(song, user?.id || 'guest');
   };
 
   const closeCamera = () => {
