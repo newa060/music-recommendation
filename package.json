@@ -55,6 +55,10 @@
     "yup": "^1.7.1"
   },
   "devDependencies": {
+    "@types/estree": "^1.0.5",
+    "@types/hammerjs": "^2.0.13",
+    "@types/hoist-non-react-statics": "^3.3.6",
+    "@types/json-schema": "^7.0.15",
     "@types/react": "~19.1.0",
     "eslint": "^9.25.0",
     "eslint-config-expo": "~10.0.0",

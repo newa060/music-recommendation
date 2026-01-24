@@ -1,5 +1,11 @@
-import { Feather, FontAwesome5, Ionicons, MaterialIcons } from "@expo/vector-icons";
-import { useFocusEffect } from '@react-navigation/native';
+import {
+  Feather,
+  FontAwesome5,
+  Ionicons,
+  MaterialIcons,
+} from "@expo/vector-icons";
+import { useFocusEffect } from "@react-navigation/native";
+import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
@@ -16,7 +22,7 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
-  View
+  View,
 } from "react-native";
 import { useMusic } from "../../context/MusicContext";
 import { useSession } from "../../context/SessionContext";
@@ -24,53 +30,62 @@ import { useSession } from "../../context/SessionContext";
 const { width, height } = Dimensions.get("window");
 
 // Custom Slider Component
-const CustomSlider = ({ value, minimumValue, maximumValue, onValueChange, minimumTrackTintColor, maximumTrackTintColor, thumbTintColor, style }) => {
+const CustomSlider = ({
+  value,
+  minimumValue,
+  maximumValue,
+  onValueChange,
+  minimumTrackTintColor,
+  maximumTrackTintColor,
+  thumbTintColor,
+  style,
+}) => {
   const [sliderWidth, setSliderWidth] = useState(width - 120);
   const [isSeeking, setIsSeeking] = useState(false);
-  
+
   const onLayout = (event) => {
     setSliderWidth(event.nativeEvent.layout.width);
   };
 
   const handlePress = (event) => {
     const x = event.nativeEvent.locationX;
-    const newValue = (x / sliderWidth) * (maximumValue - minimumValue) + minimumValue;
+    const newValue =
+      (x / sliderWidth) * (maximumValue - minimumValue) + minimumValue;
     setIsSeeking(true);
     onValueChange(Math.max(minimumValue, Math.min(maximumValue, newValue)));
     setTimeout(() => setIsSeeking(false), 100);
   };
 
-  const progress = maximumValue > 0 ? (value - minimumValue) / (maximumValue - minimumValue) : 0;
+  const progress =
+    maximumValue > 0
+      ? (value - minimumValue) / (maximumValue - minimumValue)
+      : 0;
   const thumbPosition = progress * sliderWidth;
 
   return (
     <View style={[styles.sliderContainer, style]} onLayout={onLayout}>
-      <View 
-        style={[
-          styles.track,
-          { backgroundColor: maximumTrackTintColor }
-        ]}
+      <View
+        style={[styles.track, { backgroundColor: maximumTrackTintColor }]}
       />
-      
-      <View 
+      <View
         style={[
           styles.progress,
-          { 
+          {
             backgroundColor: minimumTrackTintColor,
-            width: thumbPosition
-          }
+            width: thumbPosition,
+          },
         ]}
       />
-      <View 
+      <View
         style={[
           styles.thumb,
-          { 
+          {
             backgroundColor: thumbTintColor,
-            left: thumbPosition - 8
-          }
+            left: thumbPosition - 8,
+          },
         ]}
       />
-      <TouchableOpacity 
+      <TouchableOpacity
         style={styles.sliderTouchable}
         activeOpacity={1}
         onPress={handlePress}
@@ -81,7 +96,14 @@ const CustomSlider = ({ value, minimumValue, maximumValue, onValueChange, minimu
 };
 
 // Compact Recently Played Item Component
-const RecentlyPlayedItem = ({ item, index, onPress, onPlay, isCurrentlyPlaying, onDelete }) => {
+const RecentlyPlayedItem = ({
+  item,
+  index,
+  onPress,
+  onPlay,
+  isCurrentlyPlaying,
+  onDelete,
+}) => {
   const slideAnim = useRef(new Animated.Value(50)).current;
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const [showDeleteOption, setShowDeleteOption] = useState(false);
@@ -127,7 +149,6 @@ const RecentlyPlayedItem = ({ item, index, onPress, onPlay, isCurrentlyPlaying, 
 
   const formatTimeAgo = (dateString) => {
     if (!dateString) return "Recently";
-    
     try {
       const playedAt = new Date(dateString);
       const now = new Date();
@@ -139,9 +160,9 @@ const RecentlyPlayedItem = ({ item, index, onPress, onPlay, isCurrentlyPlaying, 
       if (diffMins < 60) {
         return `${diffMins} min ago`;
       } else if (diffHours < 24) {
-        return `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`;
+        return `${diffHours} hour${diffHours > 1 ? "s" : ""} ago`;
       } else {
-        return `${diffDays} day${diffDays > 1 ? 's' : ''} ago`;
+        return `${diffDays} day${diffDays > 1 ? "s" : ""} ago`;
       }
     } catch (error) {
       return "Recently";
@@ -150,44 +171,54 @@ const RecentlyPlayedItem = ({ item, index, onPress, onPlay, isCurrentlyPlaying, 
 
   return (
     <TouchableOpacity onPress={handleCardPress} activeOpacity={0.8}>
-      <Animated.View style={[
-        styles.recentlyPlayedItem,
-        {
-          opacity: fadeAnim,
-          transform: [{ translateX: slideAnim }],
-        }
-      ]}>
-        {/* Album Art */}
-        <View style={styles.recentAlbumArt}>
-          <View style={[
-            styles.albumArtCircle,
-            isCurrentlyPlaying && styles.playingAlbumArt
-          ]}>
-            <Ionicons 
-              name={isCurrentlyPlaying ? "musical-notes" : "musical-note"} 
-              size={20} 
-              color={isCurrentlyPlaying ? "#6C63FF" : "#888"} 
-            />
-          </View>
-          {isCurrentlyPlaying && (
-            <View style={styles.nowPlayingPulse} />
-          )}
-        </View>
+      <Animated.View
+        style={[
+          styles.recentlyPlayedItem,
+          {
+            opacity: fadeAnim,
+            transform: [{ translateX: slideAnim }],
+          },
+        ]}
+      >
+        {/* Album Art with Gradient */}
+        <LinearGradient
+          colors={
+            isCurrentlyPlaying
+              ? ["#6C63FF", "#8A84FF"]
+              : ["rgba(108, 99, 255, 0.1)", "rgba(108, 99, 255, 0.05)"]
+          }
+          style={[
+            styles.recentAlbumArt,
+            isCurrentlyPlaying && styles.playingAlbumArt,
+          ]}
+        >
+          <Ionicons
+            name={isCurrentlyPlaying ? "musical-notes" : "musical-note"}
+            size={20}
+            color={isCurrentlyPlaying ? "#FFFFFF" : "rgba(255,255,255,0.7)"}
+          />
+        </LinearGradient>
 
         {/* Song Info */}
         <View style={styles.recentItemInfo}>
           <View style={styles.recentTitleRow}>
-            <Text style={[
-              styles.recentItemTitle,
-              isCurrentlyPlaying && styles.nowPlayingTitle
-            ]} numberOfLines={1}>
+            <Text
+              style={[
+                styles.recentItemTitle,
+                isCurrentlyPlaying && styles.nowPlayingTitle,
+              ]}
+              numberOfLines={1}
+            >
               {item.title || "Unknown Song"}
             </Text>
             {isCurrentlyPlaying && (
-              <View style={styles.liveIndicator}>
+              <LinearGradient
+                colors={["#FF6B6B", "#FF8E8E"]}
+                style={styles.liveIndicator}
+              >
                 <View style={styles.liveDot} />
                 <Text style={styles.liveText}>LIVE</Text>
-              </View>
+              </LinearGradient>
             )}
           </View>
           <Text style={styles.recentItemArtist} numberOfLines={1}>
@@ -199,34 +230,46 @@ const RecentlyPlayedItem = ({ item, index, onPress, onPlay, isCurrentlyPlaying, 
         </View>
 
         {/* Play Button */}
-        <TouchableOpacity 
-          style={[
-            styles.recentPlayButton,
-            isCurrentlyPlaying && styles.recentPlayingButton
-          ]} 
-          onPress={handlePlayPress}
+        <LinearGradient
+          colors={
+            isCurrentlyPlaying ? ["#FF6B6B", "#FF8E8E"] : ["#6C63FF", "#8A84FF"]
+          }
+          style={styles.recentPlayButton}
         >
-          <Ionicons 
-            name={isCurrentlyPlaying ? "pause" : "play"} 
-            size={16} 
-            color="#fff" 
-          />
-        </TouchableOpacity>
-
-        {/* More Options with Delete */}
-        <View style={styles.moreOptionsContainer}>
-          <TouchableOpacity style={styles.recentMoreButton} onPress={handleMorePress}>
-            <Ionicons name="ellipsis-vertical" size={16} color="#888" />
+          <TouchableOpacity onPress={handlePlayPress}>
+            <Ionicons
+              name={isCurrentlyPlaying ? "pause" : "play"}
+              size={16}
+              color="#fff"
+            />
           </TouchableOpacity>
-          
+        </LinearGradient>
+
+        {/* More Options */}
+        <View style={styles.moreOptionsContainer}>
+          <TouchableOpacity
+            style={styles.recentMoreButton}
+            onPress={handleMorePress}
+          >
+            <Ionicons
+              name="ellipsis-vertical"
+              size={16}
+              color="rgba(255,255,255,0.6)"
+            />
+          </TouchableOpacity>
           {showDeleteOption && (
-            <TouchableOpacity 
+            <LinearGradient
+              colors={["rgba(255,107,107,0.95)", "rgba(255,142,142,0.95)"]}
               style={styles.deleteOptionButton}
-              onPress={handleDelete}
             >
-              <Ionicons name="trash-outline" size={16} color="#FF6B6B" />
-              <Text style={styles.deleteOptionText}>Remove</Text>
-            </TouchableOpacity>
+              <TouchableOpacity
+                onPress={handleDelete}
+                style={{ flexDirection: "row", alignItems: "center" }}
+              >
+                <Ionicons name="trash-outline" size={16} color="#FFFFFF" />
+                <Text style={styles.deleteOptionText}>Remove</Text>
+              </TouchableOpacity>
+            </LinearGradient>
           )}
         </View>
       </Animated.View>
@@ -235,14 +278,14 @@ const RecentlyPlayedItem = ({ item, index, onPress, onPlay, isCurrentlyPlaying, 
 };
 
 // Animated Song Card Component
-const AnimatedSongCard = ({ 
-  item, 
-  index, 
-  musicWaveAnim, 
-  isCurrentlyPlaying, 
-  isFeatured = false, 
+const AnimatedSongCard = ({
+  item,
+  index,
+  musicWaveAnim,
+  isCurrentlyPlaying,
+  isFeatured = false,
   onPlay,
-  onCardPress
+  onCardPress,
 }) => {
   const cardAnim = useRef(new Animated.Value(0)).current;
   const scaleAnim = useRef(new Animated.Value(0.8)).current;
@@ -282,7 +325,7 @@ const AnimatedSongCard = ({
             easing: Easing.inOut(Easing.sin),
             useNativeDriver: true,
           }),
-        ])
+        ]),
       ).start();
     }
   }, []);
@@ -317,53 +360,57 @@ const AnimatedSongCard = ({
           isFeatured ? styles.featuredCard : styles.songCard,
           {
             opacity: cardOpacity,
-            transform: [
-              { translateY: cardTranslateY },
-              { scale: scaleAnim }
-            ],
+            transform: [{ translateY: cardTranslateY }, { scale: scaleAnim }],
           },
         ]}
       >
         {isFeatured && (
           <Animated.View
-            style={[
-              styles.glowEffect,
-              { opacity: glowOpacity }
-            ]}
+            style={[styles.glowEffect, { opacity: glowOpacity }]}
           />
         )}
-        
+
         <View style={styles.songHeader}>
           <View style={styles.songInfo}>
             <View style={styles.titleRow}>
-              <Text style={isFeatured ? styles.featuredTitle : styles.songTitle}>
+              <Text
+                style={isFeatured ? styles.featuredTitle : styles.songTitle}
+              >
                 {item.title}
               </Text>
               {isFeatured && (
-                <View style={styles.featuredBadge}>
-                  <Ionicons name="star" size={16} color="#FFD700" />
+                <LinearGradient
+                  colors={["#FFD700", "#FFED4E"]}
+                  style={styles.featuredBadge}
+                >
+                  <Ionicons name="star" size={14} color="#FFFFFF" />
                   <Text style={styles.featuredBadgeText}>Featured</Text>
-                </View>
+                </LinearGradient>
               )}
             </View>
-            
+
             <View style={styles.songMeta}>
               <View style={styles.languageTag}>
-                <Ionicons name="language" size={12} color="#6C63FF" />
-                <Text style={styles.songLang}>{item.language || "Unknown"}</Text>
+                <Ionicons name="language" size={12} color="#FFFFFF" />
+                <Text style={styles.songLang}>
+                  {item.language || "Unknown"}
+                </Text>
               </View>
-              
+
               {isFeatured && item.similarity && (
-                <View style={styles.similarityTag}>
-                  <Ionicons name="pulse" size={12} color="#1DB954" />
+                <LinearGradient
+                  colors={["#1DB954", "#2AF56C"]}
+                  style={styles.similarityTag}
+                >
+                  <Ionicons name="pulse" size={12} color="#FFFFFF" />
                   <Text style={styles.songSim}>
                     {(item.similarity * 100).toFixed(1)}% Match
                   </Text>
-                </View>
+                </LinearGradient>
               )}
             </View>
           </View>
-          
+
           <View style={styles.musicWave}>
             {[0, 1, 2, 3, 4].map((i) => (
               <Animated.View
@@ -375,10 +422,12 @@ const AnimatedSongCard = ({
                     backgroundColor: isFeatured ? "#FFD700" : "#6C63FF",
                     transform: [
                       {
-                        scaleY: isCurrentlyPlaying ? musicWaveAnim.interpolate({
-                          inputRange: [0, 1],
-                          outputRange: [0.2, 1.5],
-                        }) : 0.2,
+                        scaleY: isCurrentlyPlaying
+                          ? musicWaveAnim.interpolate({
+                              inputRange: [0, 1],
+                              outputRange: [0.2, 1.5],
+                            })
+                          : 0.2,
                       },
                     ],
                   },
@@ -387,41 +436,56 @@ const AnimatedSongCard = ({
             ))}
           </View>
         </View>
-        
-        <TouchableOpacity
+
+        <LinearGradient
+          colors={
+            isCurrentlyPlaying
+              ? ["#FF6B6B", "#FF8E8E"]
+              : isFeatured
+                ? ["#FFD700", "#FFED4E"]
+                : ["#6C63FF", "#8A84FF"]
+          }
           style={[
             styles.playButton,
-            isCurrentlyPlaying && styles.playingButton,
-            isFeatured && styles.featuredPlayButton
+            isFeatured && styles.featuredPlayButton,
+            { width: isFeatured ? "100%" : "100%" }, // Ensure full width for both
           ]}
-          onPress={handlePlay}
         >
-          <Ionicons 
-            name={isCurrentlyPlaying ? "pause" : "play"} 
-            size={16} 
-            color="#fff" 
-          />
-          <Text style={styles.playText}>
-            {isCurrentlyPlaying ? " Pause" : " Play Now"}
-          </Text>
-        </TouchableOpacity>
+          <TouchableOpacity
+            onPress={handlePlay}
+            style={styles.playButtonInner}
+            activeOpacity={0.8}
+          >
+            <Ionicons
+              name={isCurrentlyPlaying ? "pause" : "play"}
+              size={isFeatured ? 20 : 18}
+              color="#fff"
+              style={styles.playIcon}
+            />
+            <Text
+              style={[styles.playText, isFeatured && styles.featuredPlayText]}
+            >
+              {isCurrentlyPlaying ? "Pause" : "Play Now"}
+            </Text>
+          </TouchableOpacity>
+        </LinearGradient>
       </Animated.View>
     </TouchableOpacity>
   );
 };
 
 // Full Screen Music Player Component
-const FullScreenPlayer = ({ 
-  visible, 
-  song, 
-  isPlaying, 
-  onPlayPause, 
+const FullScreenPlayer = ({
+  visible,
+  song,
+  isPlaying,
+  onPlayPause,
   onClose,
   onSeek,
   currentPosition,
   duration,
   onSkipForward,
-  onSkipBackward 
+  onSkipBackward,
 }) => {
   const slideAnim = useRef(new Animated.Value(height)).current;
   const fadeAnim = useRef(new Animated.Value(0)).current;
@@ -463,19 +527,29 @@ const FullScreenPlayer = ({
     const totalSeconds = Math.floor(milliseconds / 1000);
     const minutes = Math.floor(totalSeconds / 60);
     const seconds = totalSeconds % 60;
-    return `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
+    return `${minutes}:${seconds < 10 ? "0" : ""}${seconds}`;
   };
 
   if (!visible || !song) return null;
 
   return (
     <Animated.View style={[styles.fullScreenPlayer, { opacity: fadeAnim }]}>
-      <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
-      
-      <Animated.View 
+      <StatusBar
+        barStyle="light-content"
+        translucent
+        backgroundColor="transparent"
+      />
+
+      {/* Background Gradient */}
+      <LinearGradient
+        colors={["#0A0A0A", "#1A1A1A", "#2A2A2A"]}
+        style={StyleSheet.absoluteFill}
+      />
+
+      <Animated.View
         style={[
           styles.playerContainer,
-          { transform: [{ translateY: slideAnim }] }
+          { transform: [{ translateY: slideAnim }] },
         ]}
       >
         {/* Header */}
@@ -487,12 +561,16 @@ const FullScreenPlayer = ({
           <View style={styles.placeholder} />
         </View>
 
-        {/* Album Art */}
+        {/* Album Art with Gradient */}
         <View style={styles.albumArtContainer}>
-          <View style={styles.albumArt}>
-            <Ionicons name="musical-notes" size={120} color="#6C63FF" />
-            <View style={styles.albumArtOverlay} />
-          </View>
+          <LinearGradient
+            colors={["#6C63FF", "#8A84FF", "#6C63FF"]}
+            style={styles.albumArt}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+          >
+            <Ionicons name="musical-notes" size={120} color="#FFFFFF" />
+          </LinearGradient>
         </View>
 
         {/* Song Info */}
@@ -510,8 +588,8 @@ const FullScreenPlayer = ({
             maximumValue={duration > 0 ? duration : 1}
             onValueChange={onSeek}
             minimumTrackTintColor="#6C63FF"
-            maximumTrackTintColor="#333"
-            thumbTintColor="#6C63FF"
+            maximumTrackTintColor="rgba(255,255,255,0.2)"
+            thumbTintColor="#FFFFFF"
             style={styles.progressBar}
           />
           <Text style={styles.timeText}>{formatTime(duration)}</Text>
@@ -519,19 +597,30 @@ const FullScreenPlayer = ({
 
         {/* Controls */}
         <View style={styles.controlsContainer}>
-          <TouchableOpacity style={styles.controlButton} onPress={onSkipBackward}>
+          <TouchableOpacity
+            style={styles.controlButton}
+            onPress={onSkipBackward}
+          >
             <Ionicons name="play-skip-back" size={30} color="#fff" />
           </TouchableOpacity>
-          
-          <TouchableOpacity style={styles.playPauseButton} onPress={onPlayPause}>
-            <Ionicons 
-              name={isPlaying ? "pause" : "play"} 
-              size={40} 
-              color="#fff" 
-            />
-          </TouchableOpacity>
-          
-          <TouchableOpacity style={styles.controlButton} onPress={onSkipForward}>
+
+          <LinearGradient
+            colors={["#6C63FF", "#8A84FF"]}
+            style={styles.playPauseButton}
+          >
+            <TouchableOpacity onPress={onPlayPause}>
+              <Ionicons
+                name={isPlaying ? "pause" : "play"}
+                size={40}
+                color="#fff"
+              />
+            </TouchableOpacity>
+          </LinearGradient>
+
+          <TouchableOpacity
+            style={styles.controlButton}
+            onPress={onSkipForward}
+          >
             <Ionicons name="play-skip-forward" size={30} color="#fff" />
           </TouchableOpacity>
         </View>
@@ -539,13 +628,13 @@ const FullScreenPlayer = ({
         {/* Additional Controls */}
         <View style={styles.additionalControls}>
           <TouchableOpacity style={styles.smallControlButton}>
-            <Ionicons name="shuffle" size={24} color="#888" />
+            <Ionicons name="shuffle" size={24} color="rgba(255,255,255,0.7)" />
           </TouchableOpacity>
           <TouchableOpacity style={styles.smallControlButton}>
-            <Ionicons name="repeat" size={24} color="#888" />
+            <Ionicons name="repeat" size={24} color="rgba(255,255,255,0.7)" />
           </TouchableOpacity>
           <TouchableOpacity style={styles.smallControlButton}>
-            <Feather name="heart" size={24} color="#888" />
+            <Feather name="heart" size={24} color="rgba(255,255,255,0.7)" />
           </TouchableOpacity>
         </View>
       </Animated.View>
@@ -554,7 +643,13 @@ const FullScreenPlayer = ({
 };
 
 // Animated Section Header
-const AnimatedSectionHeader = ({ title, icon, delay = 0, showSeeAll = false, onSeeAll }) => {
+const AnimatedSectionHeader = ({
+  title,
+  icon,
+  delay = 0,
+  showSeeAll = false,
+  onSeeAll,
+}) => {
   const slideAnim = useRef(new Animated.Value(-50)).current;
   const fadeAnim = useRef(new Animated.Value(0)).current;
 
@@ -588,9 +683,10 @@ const AnimatedSectionHeader = ({ title, icon, delay = 0, showSeeAll = false, onS
       ]}
     >
       <View style={styles.sectionHeaderRow}>
-        <Text style={styles.sectionHeaderText}>
-          {icon} {title}
-        </Text>
+        <View style={styles.sectionTitleContainer}>
+          {icon && <Text style={styles.sectionIcon}>{icon}</Text>}
+          <Text style={styles.sectionHeaderText}>{title}</Text>
+        </View>
         {showSeeAll && (
           <TouchableOpacity style={styles.seeAllButton} onPress={onSeeAll}>
             <Text style={styles.seeAllText}>See all</Text>
@@ -648,35 +744,42 @@ const ExitConfirmationModal = ({ visible, onConfirm, onCancel }) => {
       onRequestClose={onCancel}
     >
       <Animated.View style={[styles.modalOverlay, { opacity: fadeAnim }]}>
-        <Animated.View 
+        <Animated.View
           style={[
             styles.modalContent,
-            { transform: [{ translateY: slideAnim }] }
+            { transform: [{ translateY: slideAnim }] },
           ]}
         >
           <View style={styles.modalHeader}>
-            <Ionicons name="log-out-outline" size={32} color="#FF6B6B" />
+            <LinearGradient
+              colors={["#FF6B6B", "#FF8E8E"]}
+              style={styles.modalIconContainer}
+            >
+              <Ionicons name="log-out-outline" size={32} color="#FFFFFF" />
+            </LinearGradient>
             <Text style={styles.modalTitle}>Exit App</Text>
           </View>
-          
+
           <Text style={styles.modalMessage}>
             Are you sure you want to exit? Any playing music will be stopped.
           </Text>
-          
+
           <View style={styles.modalButtons}>
-            <TouchableOpacity 
-              style={[styles.modalButton, styles.cancelButton]} 
+            <TouchableOpacity
+              style={[styles.modalButton, styles.cancelButton]}
               onPress={onCancel}
             >
               <Text style={styles.cancelButtonText}>Cancel</Text>
             </TouchableOpacity>
-            
-            <TouchableOpacity 
-              style={[styles.modalButton, styles.confirmButton]} 
-              onPress={onConfirm}
+
+            <LinearGradient
+              colors={["#FF6B6B", "#FF8E8E"]}
+              style={[styles.modalButton, styles.confirmButton]}
             >
-              <Text style={styles.confirmButtonText}>Yes, Exit</Text>
-            </TouchableOpacity>
+              <TouchableOpacity onPress={onConfirm}>
+                <Text style={styles.confirmButtonText}>Yes, Exit</Text>
+              </TouchableOpacity>
+            </LinearGradient>
           </View>
         </Animated.View>
       </Animated.View>
@@ -685,7 +788,14 @@ const ExitConfirmationModal = ({ visible, onConfirm, onCancel }) => {
 };
 
 // Recently Played Modal
-const RecentlyPlayedModal = ({ visible, onClose, recentlyPlayedList, onPlay, onDelete, currentlyPlayingId }) => {
+const RecentlyPlayedModal = ({
+  visible,
+  onClose,
+  recentlyPlayedList,
+  onPlay,
+  onDelete,
+  currentlyPlayingId,
+}) => {
   const slideAnim = useRef(new Animated.Value(height)).current;
   const fadeAnim = useRef(new Animated.Value(0)).current;
 
@@ -726,45 +836,50 @@ const RecentlyPlayedModal = ({ visible, onClose, recentlyPlayedList, onPlay, onD
     return currentlyPlayingId === song.filename;
   };
 
-  const renderRecentlyPlayedItem = ({ item, index }) => (
+  const renderRecentlyPlayedItem = ({ item, index }) =>
     item ? (
-      <Animated.View style={[
-        styles.recentlyPlayedItem,
-        {
-          opacity: fadeAnim,
-        }
-      ]}>
-        {/* Album Art */}
-        <View style={styles.recentAlbumArt}>
-          <View style={[
-            styles.albumArtCircle,
-            isSongPlaying(item) && styles.playingAlbumArt
-          ]}>
-            <Ionicons 
-              name={isSongPlaying(item) ? "musical-notes" : "musical-note"} 
-              size={20} 
-              color={isSongPlaying(item) ? "#6C63FF" : "#888"} 
-            />
-          </View>
-          {isSongPlaying(item) && (
-            <View style={styles.nowPlayingPulse} />
-          )}
-        </View>
+      <Animated.View
+        style={[
+          styles.recentlyPlayedItem,
+          {
+            opacity: fadeAnim,
+          },
+        ]}
+      >
+        <LinearGradient
+          colors={
+            isSongPlaying(item)
+              ? ["#6C63FF", "#8A84FF"]
+              : ["rgba(108, 99, 255, 0.1)", "rgba(108, 99, 255, 0.05)"]
+          }
+          style={styles.recentAlbumArt}
+        >
+          <Ionicons
+            name={isSongPlaying(item) ? "musical-notes" : "musical-note"}
+            size={20}
+            color={isSongPlaying(item) ? "#FFFFFF" : "rgba(255,255,255,0.7)"}
+          />
+        </LinearGradient>
 
-        {/* Song Info */}
         <View style={styles.recentItemInfo}>
           <View style={styles.recentTitleRow}>
-            <Text style={[
-              styles.recentItemTitle,
-              isSongPlaying(item) && styles.nowPlayingTitle
-            ]} numberOfLines={1}>
+            <Text
+              style={[
+                styles.recentItemTitle,
+                isSongPlaying(item) && styles.nowPlayingTitle,
+              ]}
+              numberOfLines={1}
+            >
               {item.title || "Unknown Song"}
             </Text>
             {isSongPlaying(item) && (
-              <View style={styles.liveIndicator}>
+              <LinearGradient
+                colors={["#FF6B6B", "#FF8E8E"]}
+                style={styles.liveIndicator}
+              >
                 <View style={styles.liveDot} />
                 <Text style={styles.liveText}>LIVE</Text>
-              </View>
+              </LinearGradient>
             )}
           </View>
           <Text style={styles.recentItemArtist} numberOfLines={1}>
@@ -772,31 +887,34 @@ const RecentlyPlayedModal = ({ visible, onClose, recentlyPlayedList, onPlay, onD
           </Text>
         </View>
 
-        {/* Action Buttons Container */}
-        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-          <TouchableOpacity 
+        <View style={{ flexDirection: "row", alignItems: "center" }}>
+          <LinearGradient
+            colors={["#6C63FF", "#8A84FF"]}
             style={styles.playButton}
-            onPress={() => onPlay(item)}
-            activeOpacity={0.7}
           >
-            <Ionicons 
-              name={isSongPlaying(item) ? "pause-circle" : "play-circle"} 
-              size={24} 
-              color="#6C63FF" 
-            />
-          </TouchableOpacity>
+            <TouchableOpacity onPress={() => onPlay(item)} activeOpacity={0.7}>
+              <Ionicons
+                name={isSongPlaying(item) ? "pause-circle" : "play-circle"}
+                size={24}
+                color="#FFFFFF"
+              />
+            </TouchableOpacity>
+          </LinearGradient>
 
-          <TouchableOpacity 
+          <LinearGradient
+            colors={["rgba(255,107,107,0.9)", "rgba(255,142,142,0.9)"]}
             style={styles.deleteButton}
-            onPress={() => onDelete(item)}
-            activeOpacity={0.7}
           >
-            <Ionicons name="trash-outline" size={20} color="#FF6B6B" />
-          </TouchableOpacity>
+            <TouchableOpacity
+              onPress={() => onDelete(item)}
+              activeOpacity={0.7}
+            >
+              <Ionicons name="trash-outline" size={20} color="#FFFFFF" />
+            </TouchableOpacity>
+          </LinearGradient>
         </View>
       </Animated.View>
-    ) : null
-  );
+    ) : null;
 
   return (
     <Modal
@@ -806,25 +924,36 @@ const RecentlyPlayedModal = ({ visible, onClose, recentlyPlayedList, onPlay, onD
       onRequestClose={onClose}
     >
       <Animated.View style={[styles.modalOverlay, { opacity: fadeAnim }]}>
-        <Animated.View 
+        <LinearGradient
+          colors={["rgba(10,10,10,0.95)", "rgba(26,26,26,0.95)"]}
+          style={StyleSheet.absoluteFill}
+        />
+        <Animated.View
           style={[
             styles.fullScreenModalContent,
-            { transform: [{ translateY: slideAnim }] }
+            { transform: [{ translateY: slideAnim }] },
           ]}
         >
           {/* Modal Header */}
-          <View style={styles.modalHeaderTop}>
-            <Text style={styles.modalHeaderTitle}>Recently Played ({recentlyPlayedList.length})</Text>
+          <LinearGradient
+            colors={["rgba(108, 99, 255, 0.2)", "rgba(108, 99, 255, 0.1)"]}
+            style={styles.modalHeaderTop}
+          >
+            <Text style={styles.modalHeaderTitle}>
+              Recently Played ({recentlyPlayedList.length})
+            </Text>
             <TouchableOpacity onPress={onClose} style={styles.closeButton}>
               <Ionicons name="close" size={28} color="#fff" />
             </TouchableOpacity>
-          </View>
+          </LinearGradient>
 
           {/* Recently Played List */}
           {recentlyPlayedList.length > 0 ? (
             <FlatList
               data={recentlyPlayedList}
-              keyExtractor={(item, index) => `modal-recent-${item.id || item.filename || index}-${index}`}
+              keyExtractor={(item, index) =>
+                `modal-recent-${item.id || item.filename || index}-${index}`
+              }
               renderItem={renderRecentlyPlayedItem}
               scrollEnabled={true}
               showsVerticalScrollIndicator={true}
@@ -832,7 +961,12 @@ const RecentlyPlayedModal = ({ visible, onClose, recentlyPlayedList, onPlay, onD
             />
           ) : (
             <View style={styles.emptyContainer}>
-              <Ionicons name="musical-notes" size={64} color="#666" />
+              <LinearGradient
+                colors={["rgba(108, 99, 255, 0.2)", "rgba(108, 99, 255, 0.1)"]}
+                style={styles.emptyIconContainer}
+              >
+                <Ionicons name="musical-notes" size={64} color="#FFFFFF" />
+              </LinearGradient>
               <Text style={styles.emptyText}>No recently played songs</Text>
             </View>
           )}
@@ -853,18 +987,18 @@ const Home = () => {
   const [showRecentlyPlayedModal, setShowRecentlyPlayedModal] = useState(false);
   const router = useRouter();
 
-  // Session management - MOVE ALL HOOKS TO THE TOP
+  // Session management
   const { isAuthenticated, user, isLoading: sessionLoading } = useSession();
 
   // Music context with recently played functionality
-  const { 
-    playSound, 
-    stopMusic, 
-    currentlyPlayingId, 
+  const {
+    playSound,
+    stopMusic,
+    currentlyPlayingId,
     playbackStatus,
     recentlyPlayed: contextRecentlyPlayed,
     removeFromRecentlyPlayed,
-    loadRecentlyPlayed
+    loadRecentlyPlayed,
   } = useMusic();
 
   // Use recently played from context with local state
@@ -873,34 +1007,29 @@ const Home = () => {
   // Load recently played when user changes or component mounts
   useEffect(() => {
     const loadRecent = async () => {
-      const userId = user?.id || 'guest';
-      console.log('👤 Loading recently played for user:', userId);
+      const userId = user?.id || "guest";
       await loadRecentlyPlayed(userId);
     };
-    
     loadRecent();
   }, [user?.id, forceRefresh]);
 
   // Update local state when context changes
   useEffect(() => {
     if (contextRecentlyPlayed && Array.isArray(contextRecentlyPlayed)) {
-      console.log('🔄 Updating recently played list:', contextRecentlyPlayed.length, 'items');
       setRecentlyPlayed(contextRecentlyPlayed);
     } else {
-      console.log('🔄 Setting empty recently played list');
       setRecentlyPlayed([]);
     }
   }, [contextRecentlyPlayed]);
 
   // Handle delete from recently played
   const handleDeleteFromRecentlyPlayed = async (songToDelete) => {
-    console.log('🗑️ Deleting song:', songToDelete.title);
-    const userId = user?.id || 'guest';
+    const userId = user?.id || "guest";
     await removeFromRecentlyPlayed(songToDelete.filename, userId);
-    setForceRefresh(prev => prev + 1); // Trigger refresh
+    setForceRefresh((prev) => prev + 1);
   };
 
-  // Animation values - MUST BE DECLARED BEFORE ANY CONDITIONAL RETURNS
+  // Animation values
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(50)).current;
   const scaleAnim = useRef(new Animated.Value(0.9)).current;
@@ -946,7 +1075,7 @@ const Home = () => {
           easing: Easing.inOut(Easing.sin),
           useNativeDriver: true,
         }),
-      ])
+      ]),
     ).start();
   }, []);
 
@@ -965,7 +1094,7 @@ const Home = () => {
             duration: 500,
             useNativeDriver: true,
           }),
-        ])
+        ]),
       ).start();
     } else {
       pulseAnim.setValue(1);
@@ -987,38 +1116,38 @@ const Home = () => {
         return false;
       };
 
-      const backHandler = BackHandler.addEventListener('hardwareBackPress', onBackPress);
+      const backHandler = BackHandler.addEventListener(
+        "hardwareBackPress",
+        onBackPress,
+      );
 
       return () => backHandler.remove();
-    }, [isAuthenticated, result])
+    }, [isAuthenticated, result]),
   );
 
-  // Clean up when component unmounts
-  useEffect(() => {
-    return () => {
-      // Cleanup is handled by MusicContext
-    };
-  }, []);
-
-  // Show loading while session is being checked - MUST BE AFTER ALL HOOKS
+  // Show loading while session is being checked
   if (sessionLoading) {
     return (
-      <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
+      <LinearGradient
+        colors={["#0A0A0A", "#1A1A1A", "#2A2A2A"]}
+        style={[
+          styles.container,
+          { justifyContent: "center", alignItems: "center" },
+        ]}
+      >
         <ActivityIndicator size="large" color="#6C63FF" />
-        <Text style={{ color: '#fff', marginTop: 10 }}>Loading...</Text>
-      </View>
+        <Text style={{ color: "#fff", marginTop: 10 }}>Loading...</Text>
+      </LinearGradient>
     );
   }
 
   const handlePlayWithHistory = async (song) => {
-    console.log('▶️ Playing song with history:', song.title);
     await playSound(song);
   };
 
   const handleCardPress = (song) => {
     setCurrentSong(song);
     setFullScreenPlayerVisible(true);
-    // Auto-play when opening full screen
     if (currentlyPlayingId !== song.filename) {
       playSound(song);
     }
@@ -1055,13 +1184,41 @@ const Home = () => {
     if (!searchText.trim()) {
       const shakeAnim = new Animated.Value(0);
       Animated.sequence([
-        Animated.timing(shakeAnim, { toValue: 15, duration: 60, useNativeDriver: true }),
-        Animated.timing(shakeAnim, { toValue: -15, duration: 60, useNativeDriver: true }),
-        Animated.timing(shakeAnim, { toValue: 10, duration: 60, useNativeDriver: true }),
-        Animated.timing(shakeAnim, { toValue: -10, duration: 60, useNativeDriver: true }),
-        Animated.timing(shakeAnim, { toValue: 5, duration: 60, useNativeDriver: true }),
-        Animated.timing(shakeAnim, { toValue: -5, duration: 60, useNativeDriver: true }),
-        Animated.timing(shakeAnim, { toValue: 0, duration: 60, useNativeDriver: true }),
+        Animated.timing(shakeAnim, {
+          toValue: 15,
+          duration: 60,
+          useNativeDriver: true,
+        }),
+        Animated.timing(shakeAnim, {
+          toValue: -15,
+          duration: 60,
+          useNativeDriver: true,
+        }),
+        Animated.timing(shakeAnim, {
+          toValue: 10,
+          duration: 60,
+          useNativeDriver: true,
+        }),
+        Animated.timing(shakeAnim, {
+          toValue: -10,
+          duration: 60,
+          useNativeDriver: true,
+        }),
+        Animated.timing(shakeAnim, {
+          toValue: 5,
+          duration: 60,
+          useNativeDriver: true,
+        }),
+        Animated.timing(shakeAnim, {
+          toValue: -5,
+          duration: 60,
+          useNativeDriver: true,
+        }),
+        Animated.timing(shakeAnim, {
+          toValue: 0,
+          duration: 60,
+          useNativeDriver: true,
+        }),
       ]).start();
       return;
     }
@@ -1070,21 +1227,23 @@ const Home = () => {
     setResult(null);
 
     try {
-      const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL || "http://192.168.18.240:3000";
+      const API_BASE_URL =
+        process.env.EXPO_PUBLIC_API_URL || "http://192.168.18.240:3000";
       const res = await fetch(
-        `${API_BASE_URL}/recommend?song=${encodeURIComponent(searchText)}`
+        `${API_BASE_URL}/recommend?song=${encodeURIComponent(searchText)}`,
       );
 
       if (!res.ok) throw new Error(`Server error: ${res.status}`);
-      
+
       const data = await res.json();
-      console.log("API Response:", data);
-      
-      const hasValidResults = data && 
-        ((data.searched_song && data.recommendations && data.recommendations.length > 0) ||
-         (data.recommendations && data.recommendations.length > 0) ||
-         (data.searched_song));
-      
+      const hasValidResults =
+        data &&
+        ((data.searched_song &&
+          data.recommendations &&
+          data.recommendations.length > 0) ||
+          (data.recommendations && data.recommendations.length > 0) ||
+          data.searched_song);
+
       if (hasValidResults) {
         setResult(data);
         Animated.spring(resultsScaleAnim, {
@@ -1094,14 +1253,18 @@ const Home = () => {
           useNativeDriver: true,
         }).start();
       } else {
-        setResult({ 
-          error: "No results found for '" + searchText + "'. Try a different song name or check the spelling." 
+        setResult({
+          error:
+            "No results found for '" +
+            searchText +
+            "'. Try a different song name or check the spelling.",
         });
       }
     } catch (err) {
       console.error("Error fetching recommendation:", err);
-      setResult({ 
-        error: "Failed to get song recommendations. Please check your connection and try again." 
+      setResult({
+        error:
+          "Failed to get song recommendations. Please check your connection and try again.",
       });
     } finally {
       setLoading(false);
@@ -1110,9 +1273,21 @@ const Home = () => {
 
   const handleFaceDetection = () => {
     Animated.sequence([
-      Animated.timing(scaleAnim, { toValue: 0.7, duration: 80, useNativeDriver: true }),
-      Animated.timing(scaleAnim, { toValue: 1.1, duration: 120, useNativeDriver: true }),
-      Animated.timing(scaleAnim, { toValue: 1, duration: 100, useNativeDriver: true }),
+      Animated.timing(scaleAnim, {
+        toValue: 0.7,
+        duration: 80,
+        useNativeDriver: true,
+      }),
+      Animated.timing(scaleAnim, {
+        toValue: 1.1,
+        duration: 120,
+        useNativeDriver: true,
+      }),
+      Animated.timing(scaleAnim, {
+        toValue: 1,
+        duration: 100,
+        useNativeDriver: true,
+      }),
     ]).start(() => {
       router.push("/FaceDetection");
     });
@@ -1120,8 +1295,16 @@ const Home = () => {
 
   const handleBackToHome = async () => {
     Animated.parallel([
-      Animated.timing(slideAnim, { toValue: 100, duration: 400, useNativeDriver: true }),
-      Animated.timing(resultsScaleAnim, { toValue: 0, duration: 300, useNativeDriver: true }),
+      Animated.timing(slideAnim, {
+        toValue: 100,
+        duration: 400,
+        useNativeDriver: true,
+      }),
+      Animated.timing(resultsScaleAnim, {
+        toValue: 0,
+        duration: 300,
+        useNativeDriver: true,
+      }),
     ]).start(() => {
       setResult(null);
       setSearchText("");
@@ -1141,7 +1324,6 @@ const Home = () => {
   };
 
   const handleSeeAllRecentlyPlayed = () => {
-    console.log("Opening recently played modal with", recentlyPlayed.length, "items");
     setShowRecentlyPlayedModal(true);
   };
 
@@ -1150,7 +1332,7 @@ const Home = () => {
     return currentlyPlayingId === song.filename;
   };
 
-  const renderSong = ({ item, index }) => (
+  const renderSong = ({ item, index }) =>
     item ? (
       <AnimatedSongCard
         item={item}
@@ -1160,8 +1342,7 @@ const Home = () => {
         onPlay={handlePlayWithHistory}
         onCardPress={handleCardPress}
       />
-    ) : null
-  );
+    ) : null;
 
   const renderRecentlyPlayedItem = ({ item, index }) => (
     <RecentlyPlayedItem
@@ -1174,19 +1355,24 @@ const Home = () => {
     />
   );
 
-  const hasValidSearchResults = result && 
-    !result.error && 
-    (result.searched_song || (result.recommendations && result.recommendations.length > 0));
+  const hasValidSearchResults =
+    result &&
+    !result.error &&
+    (result.searched_song ||
+      (result.recommendations && result.recommendations.length > 0));
 
   return (
-    <View style={styles.container}>
-      <ScrollView 
-        style={styles.scrollView} 
+    <LinearGradient
+      colors={["#0A0A0A", "#1A1A1A", "#2A2A2A"]}
+      style={styles.container}
+    >
+      <ScrollView
+        style={styles.scrollView}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
       >
         {/* Animated Header */}
-        <Animated.View 
+        <Animated.View
           style={[
             styles.header,
             {
@@ -1198,24 +1384,27 @@ const Home = () => {
           <View style={styles.headerContent}>
             <View style={styles.titleContainer}>
               <Text style={styles.title}>Aatmabeat</Text>
-              <Animated.View 
-                style={[
-                  styles.titleUnderline,
-                  {
-                    transform: [{ scaleX: musicWaveAnim }],
-                  },
-                ]} 
+              <LinearGradient
+                colors={["#6C63FF", "#8A84FF"]}
+                style={styles.titleUnderline}
               />
             </View>
-            <Text style={styles.subtitle}>Find music that matches your mood</Text>
+            <Text style={styles.subtitle}>
+              Find music that matches your mood
+            </Text>
           </View>
         </Animated.View>
 
         {/* Back to Home Button */}
         {result && (
           <View style={styles.backButtonContainer}>
-            <Animated.View style={{ opacity: fadeAnim, transform: [{ scale: scaleAnim }] }}>
-              <TouchableOpacity style={styles.backButton} onPress={handleBackToHome}>
+            <Animated.View
+              style={{ opacity: fadeAnim, transform: [{ scale: scaleAnim }] }}
+            >
+              <TouchableOpacity
+                style={styles.backButton}
+                onPress={handleBackToHome}
+              >
                 <Ionicons name="arrow-back" size={18} color="#fff" />
                 <Text style={styles.backButtonText}>Back to Home</Text>
               </TouchableOpacity>
@@ -1224,58 +1413,82 @@ const Home = () => {
         )}
 
         {/* Search Section */}
-        <Animated.View style={[styles.searchSection, { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }]}>
+        <Animated.View
+          style={[
+            styles.searchSection,
+            { opacity: fadeAnim, transform: [{ translateY: slideAnim }] },
+          ]}
+        >
           <View style={styles.searchContainer}>
-            <View style={styles.searchInputContainer}>
-              <Ionicons name="search" size={20} color="#6C63FF" style={styles.searchIcon} />
+            <LinearGradient
+              colors={["rgba(26, 26, 26, 0.9)", "rgba(42, 42, 42, 0.9)"]}
+              style={styles.searchInputContainer}
+            >
+              <Ionicons
+                name="search"
+                size={20}
+                color="#6C63FF"
+                style={styles.searchIcon}
+              />
               <TextInput
                 style={styles.searchInput}
                 placeholder="Search for songs..."
-                placeholderTextColor="#666"
+                placeholderTextColor="rgba(255,255,255,0.5)"
                 value={searchText}
                 onChangeText={setSearchText}
                 onSubmitEditing={handleSearch}
               />
-            </View>
-            <TouchableOpacity style={styles.faceButton} onPress={handleFaceDetection}>
-              <MaterialIcons name="face" size={24} color="#fff" />
-            </TouchableOpacity>
+            </LinearGradient>
+            <LinearGradient
+              colors={["#FF6B6B", "#FF8E8E"]}
+              style={styles.faceButton}
+            >
+              <TouchableOpacity onPress={handleFaceDetection}>
+                <MaterialIcons name="face" size={24} color="#fff" />
+              </TouchableOpacity>
+            </LinearGradient>
           </View>
           <Animated.View style={{ transform: [{ scale: pulseAnim }] }}>
-            <TouchableOpacity style={[styles.searchBtn, loading && styles.searchBtnLoading]} onPress={handleSearch} disabled={loading}>
-              {loading ? (
-                <View style={styles.loadingContainer}>
-                  <ActivityIndicator size="small" color="#fff" />
-                  <Text style={styles.loadingText}>Searching...</Text>
-                </View>
-              ) : (
-                <Text style={styles.searchBtnText}>Search Music</Text>
-              )}
-            </TouchableOpacity>
+            <LinearGradient
+              colors={["#6C63FF", "#8A84FF"]}
+              style={[styles.searchBtn, loading && styles.searchBtnLoading]}
+            >
+              <TouchableOpacity onPress={handleSearch} disabled={loading}>
+                {loading ? (
+                  <View style={styles.loadingContainer}>
+                    <ActivityIndicator size="small" color="#fff" />
+                    <Text style={styles.loadingText}>Searching...</Text>
+                  </View>
+                ) : (
+                  <Text style={styles.searchBtnText}>Search Music</Text>
+                )}
+              </TouchableOpacity>
+            </LinearGradient>
           </Animated.View>
         </Animated.View>
 
-        
-        {/* Recently Played Section - Compact Vertical List */}
+        {/* Recently Played Section */}
         {!result && recentlyPlayed.length > 0 && (
           <View style={styles.recentlyPlayedSection}>
-            <AnimatedSectionHeader 
-              title="Recently Played" 
-              icon="🕒" 
+            <AnimatedSectionHeader
+              title="Recently Played"
+              icon="🕒"
               delay={200}
               showSeeAll={recentlyPlayed.length > 4}
               onSeeAll={handleSeeAllRecentlyPlayed}
             />
             <FlatList
               data={recentlyPlayed.slice(0, 4)}
-              keyExtractor={(item, index) => `recent-${item.id || item.filename || index}-${index}`}
+              keyExtractor={(item, index) =>
+                `recent-${item.id || item.filename || index}-${index}`
+              }
               renderItem={renderRecentlyPlayedItem}
               scrollEnabled={false}
               showsVerticalScrollIndicator={false}
               contentContainerStyle={styles.recentlyPlayedList}
             />
             {recentlyPlayed.length > 4 && (
-              <TouchableOpacity 
+              <TouchableOpacity
                 style={styles.showMoreButton}
                 onPress={handleSeeAllRecentlyPlayed}
               >
@@ -1290,23 +1503,52 @@ const Home = () => {
 
         {/* Results Section */}
         {result && (
-          <Animated.View style={[styles.resultSection, { opacity: resultsScaleAnim, transform: [{ scale: resultsScaleAnim }] }]}>
+          <Animated.View
+            style={[
+              styles.resultSection,
+              {
+                opacity: resultsScaleAnim,
+                transform: [{ scale: resultsScaleAnim }],
+              },
+            ]}
+          >
             {result.error ? (
               <View style={styles.noResultsContainer}>
-                <Ionicons name="musical-notes" size={64} color="#666" />
+                <LinearGradient
+                  colors={[
+                    "rgba(108, 99, 255, 0.2)",
+                    "rgba(108, 99, 255, 0.1)",
+                  ]}
+                  style={styles.noResultsIcon}
+                >
+                  <Ionicons name="musical-notes" size={64} color="#FFFFFF" />
+                </LinearGradient>
                 <Text style={styles.noResultsTitle}>No Results Found</Text>
                 <Text style={styles.noResultsText}>{result.error}</Text>
-                <TouchableOpacity style={styles.tryAgainButton} onPress={() => { setResult(null); setSearchText(""); }}>
-                  <Text style={styles.tryAgainText}>Try Another Song</Text>
-                </TouchableOpacity>
+                <LinearGradient
+                  colors={["#6C63FF", "#8A84FF"]}
+                  style={styles.tryAgainButton}
+                >
+                  <TouchableOpacity
+                    onPress={() => {
+                      setResult(null);
+                      setSearchText("");
+                    }}
+                  >
+                    <Text style={styles.tryAgainText}>Try Another Song</Text>
+                  </TouchableOpacity>
+                </LinearGradient>
               </View>
             ) : hasValidSearchResults ? (
               <>
                 {result.searched_song && (
                   <>
-                    <AnimatedSectionHeader title="Your Searched Song" delay={200} />
-                    <AnimatedSongCard 
-                      item={result.searched_song} 
+                    <AnimatedSectionHeader
+                      title="Your Searched Song"
+                      delay={200}
+                    />
+                    <AnimatedSongCard
+                      item={result.searched_song}
                       index={0}
                       musicWaveAnim={musicWaveAnim}
                       isCurrentlyPlaying={isSongPlaying(result.searched_song)}
@@ -1316,29 +1558,55 @@ const Home = () => {
                     />
                   </>
                 )}
-                {result.recommendations && result.recommendations.length > 0 && (
-                  <>
-                    <AnimatedSectionHeader title="Recommended For You" delay={400} />
-                    <View style={styles.recommendationsContainer}>
-                      <FlatList
-                        data={result.recommendations}
-                        keyExtractor={(item, index) => item?.filename || index.toString()}
-                        renderItem={renderSong}
-                        scrollEnabled={false}
-                        showsVerticalScrollIndicator={false}
+                {result.recommendations &&
+                  result.recommendations.length > 0 && (
+                    <>
+                      <AnimatedSectionHeader
+                        title="Recommended For You"
+                        delay={400}
                       />
-                    </View>
-                  </>
-                )}
+                      <View style={styles.recommendationsContainer}>
+                        <FlatList
+                          data={result.recommendations}
+                          keyExtractor={(item, index) =>
+                            item?.filename || index.toString()
+                          }
+                          renderItem={renderSong}
+                          scrollEnabled={false}
+                          showsVerticalScrollIndicator={false}
+                        />
+                      </View>
+                    </>
+                  )}
               </>
             ) : (
               <View style={styles.noResultsContainer}>
-                <Ionicons name="musical-notes" size={64} color="#666" />
+                <LinearGradient
+                  colors={[
+                    "rgba(108, 99, 255, 0.2)",
+                    "rgba(108, 99, 255, 0.1)",
+                  ]}
+                  style={styles.noResultsIcon}
+                >
+                  <Ionicons name="musical-notes" size={64} color="#FFFFFF" />
+                </LinearGradient>
                 <Text style={styles.noResultsTitle}>No Results Found</Text>
-                <Text style={styles.noResultsText}>No songs found for your search. Try a different song name.</Text>
-                <TouchableOpacity style={styles.tryAgainButton} onPress={() => { setResult(null); setSearchText(""); }}>
-                  <Text style={styles.tryAgainText}>Try Another Song</Text>
-                </TouchableOpacity>
+                <Text style={styles.noResultsText}>
+                  No songs found for your search. Try a different song name.
+                </Text>
+                <LinearGradient
+                  colors={["#6C63FF", "#8A84FF"]}
+                  style={styles.tryAgainButton}
+                >
+                  <TouchableOpacity
+                    onPress={() => {
+                      setResult(null);
+                      setSearchText("");
+                    }}
+                  >
+                    <Text style={styles.tryAgainText}>Try Another Song</Text>
+                  </TouchableOpacity>
+                </LinearGradient>
               </View>
             )}
           </Animated.View>
@@ -1348,12 +1616,23 @@ const Home = () => {
         {!result && recentlyPlayed.length === 0 && !loading && (
           <Animated.View style={[styles.emptyState, { opacity: fadeAnim }]}>
             <View style={styles.emptyStateIcon}>
-              <FontAwesome5 name="search" size={80} color="#333" />
-              <Animated.View style={[styles.pulseCircle, { transform: [{ scale: pulseAnim }] }]} />
+              <LinearGradient
+                colors={["rgba(108, 99, 255, 0.3)", "rgba(108, 99, 255, 0.1)"]}
+                style={styles.emptyIconGradient}
+              >
+                <FontAwesome5 name="search" size={60} color="#FFFFFF" />
+              </LinearGradient>
+              <Animated.View
+                style={[
+                  styles.pulseCircle,
+                  { transform: [{ scale: pulseAnim }] },
+                ]}
+              />
             </View>
             <Text style={styles.emptyStateTitle}>Discover New Music</Text>
             <Text style={styles.emptyStateText}>
-              Search for your favorite songs or use face detection to find music that matches your mood
+              Search for your favorite songs or use face detection to find music
+              that matches your mood
             </Text>
           </Animated.View>
         )}
@@ -1389,7 +1668,7 @@ const Home = () => {
         onDelete={handleDeleteFromRecentlyPlayed}
         currentlyPlayingId={currentlyPlayingId}
       />
-    </View>
+    </LinearGradient>
   );
 };
 
@@ -1398,7 +1677,6 @@ export default Home;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#0A0A0A",
   },
   scrollView: {
     flex: 1,
@@ -1421,51 +1699,50 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   title: {
-    fontSize: 38,
+    fontSize: 42,
     fontWeight: "bold",
     color: "#fff",
-    letterSpacing: 1.2,
-    textShadowColor: "rgba(108, 99, 255, 0.3)",
-    textShadowOffset: { width: 0, height: 3 },
-    textShadowRadius: 6,
+    letterSpacing: 1.5,
+    textShadowColor: "rgba(108, 99, 255, 0.4)",
+    textShadowOffset: { width: 0, height: 4 },
+    textShadowRadius: 8,
   },
   titleUnderline: {
-    width: 70,
-    height: 3,
-    backgroundColor: "#6C63FF",
+    width: 80,
+    height: 4,
     borderRadius: 2,
-    marginTop: 6,
-    transformOrigin: 'left',
+    marginTop: 8,
   },
   subtitle: {
-    fontSize: 14,
-    color: "#bbb",
-    letterSpacing: 0.4,
-    lineHeight: 20,
+    fontSize: 16,
+    color: "rgba(255,255,255,0.7)",
+    letterSpacing: 0.5,
+    lineHeight: 22,
   },
   backButtonContainer: {
-    alignSelf: 'flex-start',
+    alignSelf: "flex-start",
     marginBottom: 15,
   },
   backButton: {
     flexDirection: "row",
     alignItems: "center",
     backgroundColor: "rgba(42, 42, 42, 0.9)",
-    borderRadius: 10,
-    paddingVertical: 8,
-    paddingHorizontal: 14,
+    borderRadius: 12,
+    paddingVertical: 10,
+    paddingHorizontal: 16,
     borderWidth: 1,
-    borderColor: "#333",
+    borderColor: "rgba(108, 99, 255, 0.3)",
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
+    shadowOffset: { width: 0, height: 3 },
     shadowOpacity: 0.3,
-    shadowRadius: 4,
+    shadowRadius: 5,
+    elevation: 4,
   },
   backButtonText: {
     color: "#fff",
-    fontSize: 13,
+    fontSize: 14,
     fontWeight: "600",
-    marginLeft: 5,
+    marginLeft: 6,
   },
   searchSection: {
     marginBottom: 25,
@@ -1478,33 +1755,31 @@ const styles = StyleSheet.create({
     flex: 1,
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "rgba(26, 26, 26, 0.9)",
-    borderRadius: 16,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
+    borderRadius: 18,
+    paddingHorizontal: 18,
+    paddingVertical: 16,
     borderWidth: 1,
-    borderColor: "#333",
+    borderColor: "rgba(108, 99, 255, 0.3)",
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.3,
-    shadowRadius: 6,
-    elevation: 4,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.4,
+    shadowRadius: 8,
+    elevation: 5,
   },
   searchIcon: {
-    marginRight: 10,
+    marginRight: 12,
   },
   searchInput: {
     flex: 1,
     color: "#fff",
-    fontSize: 15,
+    fontSize: 16,
     padding: 0,
     fontWeight: "500",
   },
   faceButton: {
-    backgroundColor: "#FF6B6B",
-    borderRadius: 16,
-    padding: 14,
-    marginLeft: 10,
+    borderRadius: 18,
+    padding: 16,
+    marginLeft: 12,
     shadowColor: "#FF6B6B",
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.4,
@@ -1512,16 +1787,15 @@ const styles = StyleSheet.create({
     elevation: 6,
   },
   searchBtn: {
-    marginTop: 14,
-    backgroundColor: "#6C63FF",
-    borderRadius: 16,
-    paddingVertical: 14,
+    marginTop: 16,
+    borderRadius: 18,
+    paddingVertical: 16,
     alignItems: "center",
     shadowColor: "#6C63FF",
-    shadowOffset: { width: 0, height: 3 },
+    shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.4,
-    shadowRadius: 6,
-    elevation: 5,
+    shadowRadius: 8,
+    elevation: 6,
   },
   searchBtnLoading: {
     opacity: 0.8,
@@ -1532,29 +1806,16 @@ const styles = StyleSheet.create({
   },
   loadingText: {
     color: "#fff",
-    marginLeft: 8,
+    marginLeft: 10,
     fontWeight: "600",
-    fontSize: 15,
+    fontSize: 16,
   },
   searchBtnText: {
     color: "#fff",
-    fontSize: 16,
+    fontSize: 17,
     fontWeight: "700",
-    letterSpacing: 0.4,
+    letterSpacing: 0.5,
   },
-  // Debug info styles
-  debugInfo: {
-    backgroundColor: 'rgba(0,0,0,0.3)',
-    padding: 8,
-    borderRadius: 8,
-    marginBottom: 10,
-  },
-  debugText: {
-    color: '#FFD700',
-    fontSize: 10,
-    fontFamily: 'monospace',
-  },
-  // Recently Played Section Styles
   recentlyPlayedSection: {
     marginBottom: 25,
   },
@@ -1562,193 +1823,180 @@ const styles = StyleSheet.create({
     marginBottom: 15,
   },
   sectionHeaderRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 8,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 10,
+  },
+  sectionTitleContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  sectionIcon: {
+    marginRight: 8,
+    fontSize: 20,
   },
   sectionHeaderText: {
-    fontSize: 20,
+    fontSize: 22,
     fontWeight: "bold",
     color: "#fff",
     letterSpacing: 0.4,
   },
   seeAllButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 10,
+    paddingVertical: 6,
   },
   seeAllText: {
-    color: '#6C63FF',
-    fontSize: 13,
-    fontWeight: '600',
-    marginRight: 2,
+    color: "#6C63FF",
+    fontSize: 14,
+    fontWeight: "600",
+    marginRight: 4,
   },
   headerUnderline: {
-    width: 50,
-    height: 2,
+    width: 60,
+    height: 3,
     backgroundColor: "#6C63FF",
-    borderRadius: 1,
+    borderRadius: 2,
   },
   recentlyPlayedList: {
     paddingBottom: 8,
   },
   recentlyPlayedItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(26, 26, 26, 0.9)',
-    borderRadius: 12,
-    padding: 12,
-    marginBottom: 8,
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "rgba(26, 26, 26, 0.7)",
+    borderRadius: 14,
+    padding: 14,
+    marginBottom: 10,
     marginHorizontal: 5,
     borderWidth: 1,
-    borderColor: '#333',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.2,
-    shadowRadius: 3,
-    elevation: 2,
-    position: 'relative',
-    justifyContent: 'space-between',
+    borderColor: "rgba(108, 99, 255, 0.2)",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 3,
+    position: "relative",
+    justifyContent: "space-between",
   },
   recentAlbumArt: {
-    position: 'relative',
-    marginRight: 12,
-  },
-  albumArtCircle: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: 'rgba(108, 99, 255, 0.1)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 1.5,
-    borderColor: 'rgba(108, 99, 255, 0.3)',
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    justifyContent: "center",
+    alignItems: "center",
+    marginRight: 14,
   },
   playingAlbumArt: {
-    borderColor: '#6C63FF',
-    backgroundColor: 'rgba(108, 99, 255, 0.2)',
-  },
-  nowPlayingPulse: {
-    position: 'absolute',
-    top: -2,
-    left: -2,
-    right: -2,
-    bottom: -2,
-    borderRadius: 24,
-    borderWidth: 2,
-    borderColor: '#6C63FF',
-    opacity: 0.5,
+    shadowColor: "#6C63FF",
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.8,
+    shadowRadius: 10,
+    elevation: 6,
   },
   recentItemInfo: {
     flex: 1,
   },
   recentTitleRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 2,
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 4,
   },
   recentItemTitle: {
-    color: '#fff',
-    fontSize: 14,
-    fontWeight: '600',
+    color: "#fff",
+    fontSize: 15,
+    fontWeight: "600",
     flex: 1,
   },
   nowPlayingTitle: {
-    color: '#6C63FF',
+    color: "#6C63FF",
+    fontWeight: "700",
   },
   liveIndicator: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(255, 107, 107, 0.1)',
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 6,
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 8,
     marginLeft: 8,
   },
   liveDot: {
-    width: 4,
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: '#FF6B6B',
-    marginRight: 3,
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: "#FFFFFF",
+    marginRight: 4,
   },
   liveText: {
-    color: '#FF6B6B',
-    fontSize: 9,
-    fontWeight: '800',
+    color: "#FFFFFF",
+    fontSize: 10,
+    fontWeight: "800",
     letterSpacing: 0.5,
   },
   recentItemArtist: {
-    color: '#888',
-    fontSize: 12,
-    marginBottom: 2,
+    color: "rgba(255,255,255,0.6)",
+    fontSize: 13,
+    marginBottom: 3,
   },
   recentItemTime: {
-    color: '#666',
-    fontSize: 10,
-    fontWeight: '500',
+    color: "rgba(255,255,255,0.4)",
+    fontSize: 11,
+    fontWeight: "500",
   },
   recentPlayButton: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: '#1DB954',
-    justifyContent: 'center',
-    alignItems: 'center',
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    justifyContent: "center",
+    alignItems: "center",
     marginHorizontal: 8,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.3,
-    shadowRadius: 2,
-    elevation: 2,
-  },
-  recentPlayingButton: {
-    backgroundColor: '#FF6B6B',
-  },
-  moreOptionsContainer: {
-    position: 'relative',
-  },
-  recentMoreButton: {
-    padding: 6,
-  },
-  deleteOptionButton: {
-    position: 'absolute',
-    top: -40,
-    right: 0,
-    backgroundColor: 'rgba(26, 26, 26, 0.95)',
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    flexDirection: 'row',
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#333',
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.3,
-    shadowRadius: 4,
-    elevation: 5,
+    shadowRadius: 3,
+    elevation: 3,
+  },
+  moreOptionsContainer: {
+    position: "relative",
+  },
+  recentMoreButton: {
+    padding: 8,
+  },
+  deleteOptionButton: {
+    position: "absolute",
+    top: -40,
+    right: 0,
+    borderRadius: 10,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    flexDirection: "row",
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.4,
+    shadowRadius: 6,
+    elevation: 8,
     zIndex: 10,
   },
   deleteOptionText: {
-    color: '#FF6B6B',
-    fontSize: 12,
-    fontWeight: '600',
+    color: "#FFFFFF",
+    fontSize: 13,
+    fontWeight: "600",
     marginLeft: 6,
   },
   showMoreButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 10,
-    marginTop: 5,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 12,
+    marginTop: 6,
   },
   showMoreText: {
-    color: '#6C63FF',
-    fontSize: 13,
-    fontWeight: '600',
+    color: "#6C63FF",
+    fontSize: 14,
+    fontWeight: "600",
     marginRight: 4,
   },
   resultSection: {
@@ -1756,8 +2004,8 @@ const styles = StyleSheet.create({
   },
   featuredCard: {
     backgroundColor: "rgba(108, 99, 255, 0.15)",
-    borderRadius: 18,
-    padding: 20,
+    borderRadius: 20,
+    padding: 22,
     marginBottom: 20,
     borderWidth: 2,
     borderColor: "rgba(108, 99, 255, 0.5)",
@@ -1766,32 +2014,32 @@ const styles = StyleSheet.create({
   },
   glowEffect: {
     position: "absolute",
-    top: -15,
-    left: -15,
-    right: -15,
-    bottom: -15,
+    top: -20,
+    left: -20,
+    right: -20,
+    bottom: -20,
     backgroundColor: "#6C63FF",
-    borderRadius: 25,
+    borderRadius: 30,
     opacity: 0.3,
   },
   songCard: {
-    backgroundColor: "rgba(26, 26, 26, 0.9)",
-    borderRadius: 14,
-    padding: 16,
-    marginBottom: 10,
+    backgroundColor: "rgba(26, 26, 26, 0.7)",
+    borderRadius: 16,
+    padding: 18,
+    marginBottom: 12,
     borderWidth: 1,
-    borderColor: "#333",
+    borderColor: "rgba(108, 99, 255, 0.2)",
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
-    elevation: 3,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.4,
+    shadowRadius: 5,
+    elevation: 4,
   },
   songHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "flex-start",
-    marginBottom: 14,
+    marginBottom: 16,
   },
   songInfo: {
     flex: 1,
@@ -1800,36 +2048,33 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "flex-start",
-    marginBottom: 6,
+    marginBottom: 8,
   },
   featuredTitle: {
     color: "#fff",
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: "bold",
     flex: 1,
-    marginRight: 10,
+    marginRight: 12,
   },
   songTitle: {
     color: "#fff",
-    fontSize: 15,
+    fontSize: 17,
     fontWeight: "bold",
-    marginBottom: 4,
+    marginBottom: 6,
   },
   featuredBadge: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "rgba(255, 215, 0, 0.2)",
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: "rgba(255, 215, 0, 0.5)",
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 12,
   },
   featuredBadgeText: {
-    color: "#FFD700",
-    fontSize: 11,
+    color: "#FFFFFF",
+    fontSize: 12,
     fontWeight: "bold",
-    marginLeft: 3,
+    marginLeft: 4,
   },
   songMeta: {
     flexDirection: "row",
@@ -1839,148 +2084,164 @@ const styles = StyleSheet.create({
   languageTag: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "rgba(108, 99, 255, 0.1)",
-    paddingHorizontal: 7,
-    paddingVertical: 3,
-    borderRadius: 6,
-    marginRight: 6,
-    marginBottom: 3,
+    backgroundColor: "rgba(108, 99, 255, 0.2)",
+    paddingHorizontal: 9,
+    paddingVertical: 4,
+    borderRadius: 8,
+    marginRight: 8,
+    marginBottom: 4,
   },
   similarityTag: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "rgba(29, 185, 84, 0.1)",
-    paddingHorizontal: 7,
-    paddingVertical: 3,
-    borderRadius: 6,
-    marginBottom: 3,
+    paddingHorizontal: 9,
+    paddingVertical: 4,
+    borderRadius: 8,
+    marginBottom: 4,
   },
   songLang: {
-    color: "#6C63FF",
-    fontSize: 11,
+    color: "#FFFFFF",
+    fontSize: 12,
     fontWeight: "600",
-    marginLeft: 3,
+    marginLeft: 4,
   },
   songSim: {
-    color: "#1DB954",
-    fontSize: 11,
+    color: "#FFFFFF",
+    fontSize: 12,
     fontWeight: "600",
-    marginLeft: 3,
+    marginLeft: 4,
   },
   musicWave: {
     flexDirection: "row",
     alignItems: "flex-end",
-    height: 22,
-    marginLeft: 10,
+    height: 24,
+    marginLeft: 12,
     paddingBottom: 2,
   },
   waveBar: {
-    width: 2.5,
-    marginHorizontal: 1.2,
-    borderRadius: 1.5,
+    width: 3,
+    marginHorizontal: 1.4,
+    borderRadius: 2,
   },
   playButton: {
+    borderRadius: 12,
+    paddingVertical: 14,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 3,
+    marginTop: 8,
+    width: "100%", // Full width
+    minWidth: "100%", // Ensure minimum width
+    alignSelf: "stretch", // Stretch to fill container
+  },
+  playButtonInner: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "#1DB954",
-    paddingVertical: 10,
-    borderRadius: 10,
-    shadowColor: "#1DB954",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 3,
-    elevation: 2,
+    justifyContent: "center", // Center the content
+    width: "100%", // Take full width
   },
-  playingButton: {
-    backgroundColor: "#FF6B6B",
-  },
-  featuredPlayButton: {
-    backgroundColor: "#FFD700",
+  playIcon: {
+    marginRight: 8, // Add spacing between icon and text
   },
   playText: {
     color: "#fff",
     fontWeight: "bold",
-    fontSize: 13,
-    marginLeft: 5,
+    fontSize: 15,
+    textAlign: "center", // Center the text
+    flex: 1, // Allow text to take available space
   },
   recommendationsContainer: {
-    marginTop: 6,
+    marginTop: 8,
   },
   noResultsContainer: {
-    alignItems: "center",
-    justifyContent: "center",
-    paddingVertical: 50,
-    paddingHorizontal: 30,
-  },
-  noResultsTitle: {
-    fontSize: 22,
-    fontWeight: "bold",
-    color: "#fff",
-    marginTop: 18,
-    marginBottom: 10,
-    textAlign: "center",
-  },
-  noResultsText: {
-    fontSize: 14,
-    color: "#888",
-    textAlign: "center",
-    lineHeight: 20,
-    marginBottom: 20,
-  },
-  tryAgainButton: {
-    backgroundColor: "#6C63FF",
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-    borderRadius: 10,
-  },
-  tryAgainText: {
-    color: "#fff",
-    fontWeight: "600",
-    fontSize: 14,
-  },
-  emptyState: {
     alignItems: "center",
     justifyContent: "center",
     paddingVertical: 60,
     paddingHorizontal: 30,
   },
+  noResultsIcon: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 20,
+  },
+  noResultsTitle: {
+    fontSize: 24,
+    fontWeight: "bold",
+    color: "#fff",
+    marginTop: 10,
+    marginBottom: 12,
+    textAlign: "center",
+  },
+  noResultsText: {
+    fontSize: 15,
+    color: "rgba(255,255,255,0.7)",
+    textAlign: "center",
+    lineHeight: 22,
+    marginBottom: 24,
+  },
+  tryAgainButton: {
+    borderRadius: 12,
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+  },
+  tryAgainText: {
+    color: "#fff",
+    fontWeight: "600",
+    fontSize: 15,
+  },
+  emptyState: {
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 80,
+    paddingHorizontal: 30,
+  },
   emptyStateIcon: {
     position: "relative",
-    marginBottom: 20,
+    marginBottom: 24,
+  },
+  emptyIconGradient: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    justifyContent: "center",
+    alignItems: "center",
   },
   pulseCircle: {
     position: "absolute",
-    top: -8,
-    left: -8,
-    right: -8,
-    bottom: -8,
-    backgroundColor: "rgba(108, 99, 255, 0.1)",
-    borderRadius: 44,
+    top: -12,
+    left: -12,
+    right: -12,
+    bottom: -12,
+    backgroundColor: "rgba(108, 99, 255, 0.15)",
+    borderRadius: 56,
     borderWidth: 2,
-    borderColor: "rgba(108, 99, 255, 0.3)",
+    borderColor: "rgba(108, 99, 255, 0.4)",
   },
   emptyStateTitle: {
-    fontSize: 22,
+    fontSize: 24,
     fontWeight: "bold",
     color: "#fff",
-    marginBottom: 10,
+    marginBottom: 12,
     textAlign: "center",
   },
   emptyStateText: {
-    fontSize: 14,
-    color: "#888",
+    fontSize: 15,
+    color: "rgba(255,255,255,0.7)",
     textAlign: "center",
-    lineHeight: 20,
+    lineHeight: 22,
   },
   // Full Screen Player Styles
   fullScreenPlayer: {
-    position: 'absolute',
+    position: "absolute",
     top: 0,
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: '#0A0A0A',
     zIndex: 1000,
   },
   playerContainer: {
@@ -1990,135 +2251,131 @@ const styles = StyleSheet.create({
     paddingBottom: 40,
   },
   playerHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     marginBottom: 40,
   },
   minimizeButton: {
     padding: 10,
   },
   playerTitle: {
-    color: '#fff',
-    fontSize: 18,
-    fontWeight: 'bold',
+    color: "#fff",
+    fontSize: 20,
+    fontWeight: "bold",
   },
   placeholder: {
     width: 40,
   },
   albumArtContainer: {
-    alignItems: 'center',
+    alignItems: "center",
     marginBottom: 40,
   },
   albumArt: {
     width: width * 0.7,
     height: width * 0.7,
-    backgroundColor: 'rgba(108, 99, 255, 0.1)',
-    borderRadius: 20,
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 2,
-    borderColor: 'rgba(108, 99, 255, 0.3)',
-    position: 'relative',
-  },
-  albumArtOverlay: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: 'rgba(0, 0, 0, 0.3)',
-    borderRadius: 20,
+    borderRadius: 24,
+    justifyContent: "center",
+    alignItems: "center",
+    shadowColor: "#6C63FF",
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.5,
+    shadowRadius: 20,
+    elevation: 10,
   },
   songInfoContainer: {
-    alignItems: 'center',
+    alignItems: "center",
     marginBottom: 40,
   },
   playerSongTitle: {
-    color: '#fff',
-    fontSize: 24,
-    fontWeight: 'bold',
-    textAlign: 'center',
-    marginBottom: 8,
+    color: "#fff",
+    fontSize: 28,
+    fontWeight: "bold",
+    textAlign: "center",
+    marginBottom: 10,
   },
   playerArtist: {
-    color: '#888',
-    fontSize: 16,
-    textAlign: 'center',
+    color: "rgba(255,255,255,0.6)",
+    fontSize: 18,
+    textAlign: "center",
   },
   progressContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     marginBottom: 40,
   },
   timeText: {
-    color: '#888',
-    fontSize: 12,
-    width: 40,
+    color: "rgba(255,255,255,0.6)",
+    fontSize: 14,
+    width: 50,
   },
   progressBar: {
     flex: 1,
     height: 40,
-    marginHorizontal: 10,
+    marginHorizontal: 12,
   },
   controlsContainer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
     marginBottom: 30,
   },
   controlButton: {
     padding: 20,
   },
   playPauseButton: {
-    backgroundColor: '#6C63FF',
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    justifyContent: 'center',
-    alignItems: 'center',
+    width: 84,
+    height: 84,
+    borderRadius: 42,
+    justifyContent: "center",
+    alignItems: "center",
     marginHorizontal: 30,
-    shadowColor: '#6C63FF',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.4,
-    shadowRadius: 8,
-    elevation: 6,
+    shadowColor: "#6C63FF",
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.5,
+    shadowRadius: 12,
+    elevation: 8,
   },
   additionalControls: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
   },
   smallControlButton: {
-    padding: 15,
-    marginHorizontal: 10,
+    padding: 16,
+    marginHorizontal: 12,
   },
   // Custom Slider Styles
   sliderContainer: {
     height: 40,
-    justifyContent: 'center',
-    position: 'relative',
+    justifyContent: "center",
+    position: "relative",
   },
   track: {
     height: 4,
     borderRadius: 2,
-    backgroundColor: '#333',
+    backgroundColor: "rgba(255,255,255,0.2)",
   },
   progress: {
     height: 4,
     borderRadius: 2,
-    backgroundColor: '#6C63FF',
-    position: 'absolute',
+    backgroundColor: "#6C63FF",
+    position: "absolute",
     left: 0,
   },
   thumb: {
-    width: 16,
-    height: 16,
-    borderRadius: 8,
-    backgroundColor: '#6C63FF',
-    position: 'absolute',
-    top: '50%',
-    marginTop: -8,
+    width: 18,
+    height: 18,
+    borderRadius: 9,
+    backgroundColor: "#FFFFFF",
+    position: "absolute",
+    top: "50%",
+    marginTop: -9,
+    shadowColor: "#6C63FF",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.8,
+    shadowRadius: 4,
+    elevation: 4,
   },
   sliderTouchable: {
     ...StyleSheet.absoluteFillObject,
@@ -2126,127 +2383,145 @@ const styles = StyleSheet.create({
   // Modal Styles
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.8)',
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: "rgba(0, 0, 0, 0.9)",
+    justifyContent: "center",
+    alignItems: "center",
     padding: 20,
   },
   modalContent: {
-    backgroundColor: '#1A1A1A',
-    borderRadius: 20,
-    padding: 24,
-    width: '100%',
-    maxWidth: 320,
+    backgroundColor: "rgba(26, 26, 26, 0.95)",
+    borderRadius: 24,
+    padding: 28,
+    width: "100%",
+    maxWidth: 340,
     borderWidth: 1,
-    borderColor: '#333',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.3,
-    shadowRadius: 20,
-    elevation: 10,
+    borderColor: "rgba(108, 99, 255, 0.3)",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 12 },
+    shadowOpacity: 0.5,
+    shadowRadius: 24,
+    elevation: 12,
+    backdropFilter: "blur(10px)",
   },
   modalHeader: {
-    alignItems: 'center',
-    marginBottom: 20,
+    alignItems: "center",
+    marginBottom: 24,
+  },
+  modalIconContainer: {
+    width: 70,
+    height: 70,
+    borderRadius: 35,
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 16,
   },
   modalTitle: {
-    fontSize: 22,
-    fontWeight: 'bold',
-    color: '#fff',
-    marginTop: 12,
-    textAlign: 'center',
+    fontSize: 24,
+    fontWeight: "bold",
+    color: "#fff",
+    textAlign: "center",
   },
   modalMessage: {
     fontSize: 16,
-    color: '#bbb',
-    textAlign: 'center',
-    lineHeight: 22,
-    marginBottom: 24,
+    color: "rgba(255,255,255,0.7)",
+    textAlign: "center",
+    lineHeight: 24,
+    marginBottom: 28,
   },
   modalButtons: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    justifyContent: "space-between",
   },
   modalButton: {
     flex: 1,
-    paddingVertical: 14,
-    borderRadius: 12,
-    alignItems: 'center',
-    marginHorizontal: 6,
+    borderRadius: 14,
+    alignItems: "center",
+    marginHorizontal: 8,
   },
   cancelButton: {
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    backgroundColor: "rgba(255, 255, 255, 0.1)",
     borderWidth: 1,
-    borderColor: '#333',
+    borderColor: "rgba(255,255,255,0.2)",
+    paddingVertical: 16,
   },
   confirmButton: {
-    backgroundColor: '#FF6B6B',
+    paddingVertical: 16,
   },
   cancelButtonText: {
-    color: '#fff',
+    color: "#fff",
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: "600",
   },
   confirmButtonText: {
-    color: '#fff',
+    color: "#fff",
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
   // Recently Played Modal Styles
   fullScreenModalContent: {
     flex: 1,
-    backgroundColor: '#0A0A0A',
-    borderTopLeftRadius: 30,
-    borderTopRightRadius: 30,
+    backgroundColor: "rgba(10, 10, 10, 0.95)",
+    borderTopLeftRadius: 32,
+    borderTopRightRadius: 32,
     marginTop: 60,
-    overflow: 'hidden',
+    overflow: "hidden",
   },
   modalHeaderTop: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingVertical: 16,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingHorizontal: 24,
+    paddingVertical: 20,
     borderBottomWidth: 1,
-    borderBottomColor: '#2A2A2A',
+    borderBottomColor: "rgba(108, 99, 255, 0.2)",
   },
   modalHeaderTitle: {
-    fontSize: 22,
-    fontWeight: 'bold',
-    color: '#fff',
+    fontSize: 24,
+    fontWeight: "bold",
+    color: "#fff",
   },
   closeButton: {
     padding: 8,
   },
   modalListContent: {
-    paddingHorizontal: 10,
-    paddingVertical: 10,
+    paddingHorizontal: 16,
+    paddingVertical: 16,
   },
   playButton: {
-    padding: 10,
-    marginHorizontal: 4,
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderRadius: 8,
-    backgroundColor: 'rgba(108, 99, 255, 0.1)',
+    padding: 12,
+    marginHorizontal: 6,
+    justifyContent: "center",
+    alignItems: "center",
+    borderRadius: 10,
+    width: 44,
+    height: 44,
   },
   deleteButton: {
-    padding: 10,
-    marginHorizontal: 4,
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderRadius: 8,
-    backgroundColor: 'rgba(255, 107, 107, 0.1)',
+    padding: 12,
+    marginHorizontal: 6,
+    justifyContent: "center",
+    alignItems: "center",
+    borderRadius: 10,
+    width: 44,
+    height: 44,
   },
   emptyContainer: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     paddingHorizontal: 20,
   },
+  emptyIconContainer: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 24,
+  },
   emptyText: {
-    color: '#888',
-    fontSize: 16,
+    color: "rgba(255,255,255,0.6)",
+    fontSize: 18,
     marginTop: 16,
   },
 });

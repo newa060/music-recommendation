@@ -1,4 +1,4 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Audio } from "expo-av";
 import React, { createContext, useContext, useEffect, useState } from "react";
 
@@ -95,11 +95,11 @@ export const MusicProvider = ({ children }) => {
         console.log("🔄 Stopping current song to play new one");
         await stopMusic();
         // Small delay to ensure cleanup
-        await new Promise(resolve => setTimeout(resolve, 100));
+        await new Promise((resolve) => setTimeout(resolve, 100));
       }
 
       console.log(`🎵 Creating new sound for: ${song.filename}`);
-      
+
       // Create and play new sound
       const { sound: newSound } = await Audio.Sound.createAsync(
         {
@@ -114,14 +114,14 @@ export const MusicProvider = ({ children }) => {
             isLoaded: status.isLoaded,
           });
           setIsPlaying(status.isPlaying);
-          
+
           if (status.didJustFinish) {
             console.log("🎵 Song finished playing");
             setCurrentlyPlayingId(null);
             setIsPlaying(false);
             setCurrentSong(null);
           }
-        }
+        },
       );
 
       // Set the new sound
@@ -129,15 +129,17 @@ export const MusicProvider = ({ children }) => {
       setCurrentlyPlayingId(song.filename);
       setCurrentSong(song);
       setIsPlaying(true);
-      
+
       // ✅ CRITICAL: Save to recently played
       // Get user ID from your session context (you'll need to pass this)
       // For now, we'll use 'guest' as default
-      const userId = 'guest'; // You should get this from your auth system
+      const userId = "guest"; // You should get this from your auth system
       await saveToRecentlyPlayed(song, userId);
-      
-      console.log("✅ New song playing and saved to recently played:", song.title || song.filename);
-      
+
+      console.log(
+        "✅ New song playing and saved to recently played:",
+        song.title || song.filename,
+      );
     } catch (err) {
       console.error("❌ Failed to play song:", err);
       // Reset state on error
@@ -148,110 +150,124 @@ export const MusicProvider = ({ children }) => {
   };
 
   // Save to recently played
-  const saveToRecentlyPlayed = async (song, userId = 'guest') => {
-    console.log('💾 Saving to recently played:', song.title || song.filename, 'for user:', userId);
-    
+  const saveToRecentlyPlayed = async (song, userId = "guest") => {
+    console.log(
+      "💾 Saving to recently played:",
+      song.title || song.filename,
+      "for user:",
+      userId,
+    );
+
     try {
       const songWithMetadata = {
         ...song,
-        id: song.id || `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-        title: song.title || 'Unknown Song',
-        artist: song.artist || 'Unknown Artist',
+        id:
+          song.id || `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+        title: song.title || "Unknown Song",
+        artist: song.artist || "Unknown Artist",
         filename: song.filename,
         playedAt: new Date().toISOString(),
-        source: song.source || 'search',
+        source: song.source || "search",
         userId: userId,
       };
-      
-      if (userId === 'guest') {
+
+      if (userId === "guest") {
         // For guest users, save to AsyncStorage
-        const key = 'guest_recently_played';
+        const key = "guest_recently_played";
         const existing = await AsyncStorage.getItem(key);
         let songs = existing ? JSON.parse(existing) : [];
-        
+
         // Remove if already exists (avoid duplicates)
-        songs = songs.filter(s => s.filename !== song.filename);
-        
+        songs = songs.filter((s) => s.filename !== song.filename);
+
         // Add to beginning
         songs.unshift(songWithMetadata);
-        
+
         // Keep only last 10
         songs = songs.slice(0, 10);
-        
+
         await AsyncStorage.setItem(key, JSON.stringify(songs));
         setRecentlyPlayed(songs);
-        
-        console.log('✅ Saved to guest recently played. Total songs:', songs.length);
+
+        console.log(
+          "✅ Saved to guest recently played. Total songs:",
+          songs.length,
+        );
       } else {
         // For logged-in users, save to backend
         try {
-          const response = await fetch('http://192.168.18.240:3000/api/recently-played', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              userId,
-              song: songWithMetadata
-            })
-          });
-          
+          const response = await fetch(
+            "http://192.168.18.240:3000/api/recently-played",
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                userId,
+                song: songWithMetadata,
+              }),
+            },
+          );
+
           if (response.ok) {
             // Update local state
             const newSongs = [
               songWithMetadata,
-              ...recentlyPlayed.filter(s => s.filename !== song.filename)
+              ...recentlyPlayed.filter((s) => s.filename !== song.filename),
             ].slice(0, 10);
-            
+
             setRecentlyPlayed(newSongs);
-            console.log('✅ Saved to backend recently played');
+            console.log("✅ Saved to backend recently played");
           }
         } catch (error) {
-          console.error('❌ Error saving to backend:', error);
+          console.error("❌ Error saving to backend:", error);
           // Fallback to AsyncStorage if backend fails
           const key = `user_${userId}_recently_played`;
           const existing = await AsyncStorage.getItem(key);
           let songs = existing ? JSON.parse(existing) : [];
-          
-          songs = songs.filter(s => s.filename !== song.filename);
+
+          songs = songs.filter((s) => s.filename !== song.filename);
           songs.unshift(songWithMetadata);
           songs = songs.slice(0, 10);
-          
+
           await AsyncStorage.setItem(key, JSON.stringify(songs));
           setRecentlyPlayed(songs);
-          
-          console.log('✅ Saved to AsyncStorage fallback');
+
+          console.log("✅ Saved to AsyncStorage fallback");
         }
       }
     } catch (error) {
-      console.error('❌ Error saving to recently played:', error);
+      console.error("❌ Error saving to recently played:", error);
     }
   };
 
   // Load recently played
-  const loadRecentlyPlayed = async (userId = 'guest') => {
-    console.log('📂 Loading recently played for user:', userId);
-    
+  const loadRecentlyPlayed = async (userId = "guest") => {
+    console.log("📂 Loading recently played for user:", userId);
+
     try {
-      if (userId === 'guest') {
+      if (userId === "guest") {
         // Load from AsyncStorage for guest
-        const key = 'guest_recently_played';
+        const key = "guest_recently_played";
         const existing = await AsyncStorage.getItem(key);
         const songs = existing ? JSON.parse(existing) : [];
         setRecentlyPlayed(songs);
-        console.log('📊 Loaded', songs.length, 'songs for guest');
+        console.log("📊 Loaded", songs.length, "songs for guest");
       } else {
         // Load from backend for logged-in users
         try {
           const response = await fetch(
-            `http://192.168.18.240:3000/api/recently-played/${userId}`
+            `http://192.168.18.240:3000/api/recently-played/${userId}`,
           );
-          
+
           if (response.ok) {
             const data = await response.json();
             if (data.success && data.songs) {
               setRecentlyPlayed(data.songs);
-              console.log('📊 Loaded', data.songs.length, 'songs from backend');
+              console.log("📊 Loaded", data.songs.length, "songs from backend");
             } else {
-              console.log('📊 No songs from backend, trying AsyncStorage fallback');
+              console.log(
+                "📊 No songs from backend, trying AsyncStorage fallback",
+              );
               // Try AsyncStorage fallback
               const key = `user_${userId}_recently_played`;
               const existing = await AsyncStorage.getItem(key);
@@ -264,83 +280,100 @@ export const MusicProvider = ({ children }) => {
             const existing = await AsyncStorage.getItem(key);
             const songs = existing ? JSON.parse(existing) : [];
             setRecentlyPlayed(songs);
-            console.log('📊 Loaded', songs.length, 'songs from AsyncStorage fallback');
+            console.log(
+              "📊 Loaded",
+              songs.length,
+              "songs from AsyncStorage fallback",
+            );
           }
         } catch (error) {
-          console.error('❌ Error loading from backend:', error);
+          console.error("❌ Error loading from backend:", error);
           // Fallback to AsyncStorage
           const key = `user_${userId}_recently_played`;
           const existing = await AsyncStorage.getItem(key);
           const songs = existing ? JSON.parse(existing) : [];
           setRecentlyPlayed(songs);
-          console.log('📊 Loaded', songs.length, 'songs from AsyncStorage (backend error)');
+          console.log(
+            "📊 Loaded",
+            songs.length,
+            "songs from AsyncStorage (backend error)",
+          );
         }
       }
     } catch (error) {
-      console.error('❌ Error loading recently played:', error);
+      console.error("❌ Error loading recently played:", error);
       setRecentlyPlayed([]);
     }
   };
 
   // Remove from recently played
-  const removeFromRecentlyPlayed = async (filename, userId = 'guest') => {
-    console.log('🗑️ Removing song:', filename, 'for user:', userId);
-    
+  const removeFromRecentlyPlayed = async (filename, userId = "guest") => {
+    console.log("🗑️ Removing song:", filename, "for user:", userId);
+
     try {
-      if (userId === 'guest') {
-        const key = 'guest_recently_played';
+      if (userId === "guest") {
+        const key = "guest_recently_played";
         const existing = await AsyncStorage.getItem(key);
         if (existing) {
           const songs = JSON.parse(existing);
-          const filteredSongs = songs.filter(song => song.filename !== filename);
+          const filteredSongs = songs.filter(
+            (song) => song.filename !== filename,
+          );
           await AsyncStorage.setItem(key, JSON.stringify(filteredSongs));
           setRecentlyPlayed(filteredSongs);
-          console.log('✅ Removed from guest recently played');
+          console.log("✅ Removed from guest recently played");
         }
       } else {
         // For logged-in users, remove from backend
         try {
-          await fetch(`http://192.168.18.240:3000/api/recently-played/${userId}/${filename}`, {
-            method: 'DELETE',
-          });
-          
+          await fetch(
+            `http://192.168.18.240:3000/api/recently-played/${userId}/${filename}`,
+            {
+              method: "DELETE",
+            },
+          );
+
           // Update local state
-          const filteredSongs = recentlyPlayed.filter(song => song.filename !== filename);
+          const filteredSongs = recentlyPlayed.filter(
+            (song) => song.filename !== filename,
+          );
           setRecentlyPlayed(filteredSongs);
-          console.log('✅ Removed from backend');
+          console.log("✅ Removed from backend");
         } catch (error) {
-          console.error('❌ Error removing from backend:', error);
+          console.error("❌ Error removing from backend:", error);
           // Fallback to AsyncStorage
           const key = `user_${userId}_recently_played`;
           const existing = await AsyncStorage.getItem(key);
           if (existing) {
             const songs = JSON.parse(existing);
-            const filteredSongs = songs.filter(song => song.filename !== filename);
+            const filteredSongs = songs.filter(
+              (song) => song.filename !== filename,
+            );
             await AsyncStorage.setItem(key, JSON.stringify(filteredSongs));
             setRecentlyPlayed(filteredSongs);
-            console.log('✅ Removed from AsyncStorage fallback');
+            console.log("✅ Removed from AsyncStorage fallback");
           }
         }
       }
     } catch (error) {
-      console.error('❌ Error removing from recently played:', error);
+      console.error("❌ Error removing from recently played:", error);
     }
   };
 
   // Clear all recently played
-  const clearRecentlyPlayed = async (userId = 'guest') => {
-    console.log('🧹 Clearing recently played for user:', userId);
-    
+  const clearRecentlyPlayed = async (userId = "guest") => {
+    console.log("🧹 Clearing recently played for user:", userId);
+
     try {
-      if (userId === 'guest') {
-        await AsyncStorage.removeItem('guest_recently_played');
+      if (userId === "guest") {
+        await AsyncStorage.removeItem("guest_recently_played");
       } else {
         await AsyncStorage.removeItem(`user_${userId}_recently_played`);
       }
       setRecentlyPlayed([]);
-      console.log('✅ Cleared recently played');
+      console.log("✅ Cleared recently played");
     } catch (error) {
-      console.error('❌ Error clearing recently played:', error);
+      console.error("❌ Error clearing recently played:", error);
     }
   };
 
