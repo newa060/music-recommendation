@@ -48,3 +48,17 @@ Join our community of developers creating universal apps.
 
 - [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
 - [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+
+## 📸 Screenshots
+
+<div align="center">
+  <img src="./screenshots/signupPage.png" alt="Home Screen" width="250"/>
+  <img src="./screenshots/signinPage.png" alt="Home Screen" width="250"/>
+  <img src="./screenshots/homePage.png" alt="Home Screen" width="250"/>
+  <img src="./screenshots/manualSearch.png" alt="Home Screen" width="250"/>
+  <img src="./screenshots/faceDetection_Page.png" alt="Emotion Detection" width="250"/>
+  <img src="./screenshots/happyface.png" alt="Music Recommendations" width="250"/>
+  <img src="./screenshots/neutralface.png" alt="Home Screen" width="250"/>
+   <img src="./screenshots/sadface.png" alt="Home Screen" width="250"/>
+     <img src="./screenshots/logoutPage.png" alt="Home Screen" width="250"/>
+</div>
